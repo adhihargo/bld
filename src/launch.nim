@@ -1,0 +1,73 @@
+import std/algorithm
+import std/os
+import std/osproc
+import std/sequtils
+import std/strutils
+import std/tables
+
+import args
+import config
+import configdata
+import envvars
+import errors
+
+proc getArgData(): ref ArgumentsData =
+  try:
+    result = parseArgs()
+  except CommandLineError as e:
+    stderr.writeLine("> Command line error: ", e.msg)
+    quit(QuitFailure)
+
+proc getConfigData(argData: ref ArgumentsData): ref ConfigData =
+  if argData == nil:
+    return
+
+  try:
+    let confPath = getConfigPath(argData.configPath)
+    result = readConfig(confPath)
+  except ConfigError as e:
+    stderr.writeLine("> Config error: ", e.msg)
+    quit(QuitFailure)
+
+proc processVersionSpec(versionSpec: string, versionOpts: seq[string]): string =
+  if versionSpec == "":
+    result = versionOpts[versionOpts.high]
+  elif not (versionSpec in versionOpts):
+    let matchingVersionOpts = filter(
+      toOpenArray(versionOpts, 0, versionOpts.high),
+      proc(v: string): bool = v.startsWith(versionSpec)
+    )
+    if matchingVersionOpts.len > 0:
+      result = matchingVersionOpts[matchingVersionOpts.high]
+
+proc processCommandStr(versionSpec: string, passedArgs: string, confData: ref ConfigData): string =
+  let
+    binPath = confData.paths.getOrDefault(versionSpec)
+    cmdSwitches = confData.switches.getOrDefault(versionSpec)
+  if not fileExists(binPath):
+    stderr.writeLine("> Nonexistent binary path: ", binPath)
+  return [binPath, passedArgs, cmdSwitches].join(" ")
+
+proc runApp() =
+  let
+    argData = getArgData()
+    confData = getConfigData(argData)
+
+  var
+    versionOpts = sorted(confData.paths.keys.toSeq)
+    versionSpec = processVersionSpec(argData.versionSpec, versionOpts)
+  if versionSpec == "":
+    var versionSpecOpts = join(versionOpts, ", ")
+    stderr.writeLine("> Invalid version spec: ", argData.versionSpec)
+    stderr.writeLine("> Available version specs: ", versionSpecOpts)
+    quit(QuitFailure)
+
+  let versionEnvVars = confData.envs.getOrDefault(versionSpec)
+  applyEnvVars(versionEnvVars)
+
+  let cmdStr = processCommandStr(versionSpec, argData.passedArgs, confData)
+  stderr.writeLine("> Command: ", cmdStr)
+  discard execCmd(cmdStr)
+
+when isMainModule:
+  runApp()

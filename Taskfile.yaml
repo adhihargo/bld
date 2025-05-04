@@ -1,0 +1,20 @@
+version: '3'
+
+vars:
+  OUTPUT_PATH: bld
+  NIMC_ARGS_REL: --verbosity:0 --debuginfo:off -d:release
+
+tasks:
+  build:
+    dir: '{{.TASKFILE_DIR}}'
+    sources:
+      - src/*.nim
+    cmds:
+      - nim compile {{.NIMC_ARGS_REL}} -o:{{.OUTPUT_PATH}} src/launch.nim {{.CLI_ARGS}} # 
+      - task: pack
+  pack:
+    dir: '{{.TASKFILE_DIR}}'
+    cmds:
+      - strip {{.OUTPUT_PATH}}.exe
+      - upx {{.OUTPUT_PATH}}.exe
+
