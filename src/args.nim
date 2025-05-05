@@ -4,12 +4,16 @@ import std/strformat
 
 import errors
 
-type ArgumentsData* = object
-  help: bool
-  versionSpec*: string
-  filePathList*: seq[string]
-  configPath*: string
-  passedArgs*: string
+type
+  CommandType* = enum
+    cmdExec, cmdList
+  ArgumentsData* = object
+    help: bool
+    commandType*: CommandType
+    versionSpec*: string
+    filePathList*: seq[string]
+    configPath*: string
+    passedArgs*: string
 
 proc printHelp() =
   let binName = lastPathPart(getAppFilename())
@@ -23,6 +27,9 @@ FILE_ARG*		Any number of file arguments. Ones
 -v:VERSION_SPEC		Specify version spec as listed as a
 			key in config file's 'paths' section.
 -c/--conf=CONFIG_PATH	Specify custom path for config file.
+-l/--list		List all version specs registered
+			for the launcher, or if -v is used,
+			ones prefixed with VERSION_SPEC.
 -h/--help		Print help, then exit.
 -/--			First occurence ends command line
 			parsing. Remaining arguments will be
@@ -31,9 +38,9 @@ FILE_ARG*		Any number of file arguments. Ones
 """
 
 proc parseArgsRaw(): ref ArgumentsData =
-  var p = initOptParser(shortNoVal = {'h'}, longNoVal = @["help", ""])
+  var p = initOptParser(shortNoVal = {'h', 'l'}, longNoVal = @["help", "list", ""])
 
-  result = new ArgumentsData
+  result = (ref ArgumentsData)(commandType: cmdExec)
   while true:
     p.next()
     if p.kind == cmdEnd:
@@ -48,6 +55,8 @@ proc parseArgsRaw(): ref ArgumentsData =
       if p.val == "":
         raise newException(CommandLineError, "-c/--conf needs filepath argument")
       result.configPath = p.val
+    elif p.key in ["l", "list"]:
+      result.commandType = cmdList
     elif p.key in ["h", "help"]:
       result.help = true
     elif p.kind == cmdArgument:

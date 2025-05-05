@@ -29,14 +29,20 @@ proc getConfigData(argData: ref ArgumentsData): ref ConfigData =
     stderr.writeLine("> Config error: ", e.msg)
     quit(QuitFailure)
 
+proc getMatchingVersionOpts(
+    versionSpec: string, versionOpts: seq[string]
+): seq[string] {.inline.} =
+  return filter(
+    toOpenArray(versionOpts, 0, versionOpts.high),
+    proc(v: string): bool =
+      v.startsWith(versionSpec),
+  )
+
 proc processVersionSpec(versionSpec: string, versionOpts: seq[string]): string =
   if versionSpec == "":
     result = versionOpts[versionOpts.high]
   elif not (versionSpec in versionOpts):
-    let matchingVersionOpts = filter(
-      toOpenArray(versionOpts, 0, versionOpts.high),
-      proc(v: string): bool = v.startsWith(versionSpec)
-    )
+    let matchingVersionOpts = getMatchingVersionOpts(versionSpec, versionOpts)
     if matchingVersionOpts.len > 0:
       result = matchingVersionOpts[matchingVersionOpts.high]
 
@@ -52,10 +58,16 @@ proc runApp() =
   let
     argData = getArgData()
     confData = getConfigData(argData)
-
-  var
     versionOpts = sorted(confData.paths.keys.toSeq)
-    versionSpec = processVersionSpec(argData.versionSpec, versionOpts)
+
+  if argData.commandType == cmdList:
+    let matchingVersionOpts = getMatchingVersionOpts(argData.versionSpec, versionOpts)
+    stderr.writeLine("> Blender versions registered:")
+    for v in matchingVersionOpts:
+      stderr.writeLine("> -v:", v)
+    quit(QuitSuccess)
+
+  var versionSpec = processVersionSpec(argData.versionSpec, versionOpts)
   if versionSpec == "":
     var versionSpecOpts = join(versionOpts, ", ")
     stderr.writeLine("> Invalid version spec: ", argData.versionSpec)
