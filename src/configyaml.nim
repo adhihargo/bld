@@ -26,6 +26,8 @@ proc readConfigFileYAML*(filePath:string): seq[JsonNode] =
     raise newException(ConfigError, &"[{mark.line}:{mark.column}] " & e.msg)
 
 proc readConfigRawYAML*(jsConfigList: seq[JsonNode]): ref ConfigData =
+  doAssert jsConfigList.len > 0, "File is empty"
+
   let jsConfig = jsConfigList[0]
   doAssert jsConfig.kind == JObject
 

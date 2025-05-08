@@ -29,7 +29,7 @@ proc readConfigRawJSON*(jsConfig: JsonNode): ref ConfigData =
   doAssert jsConfig.isValidConfig, "Invalid config JSON schema"
 
   result = new(ConfigData)
-  let jsPaths = jsConfig["paths"]
+  let jsPaths = jsConfig.getOrDefault("paths")
   if jsPaths != nil and jsPaths.kind != JNull:
     doAssert jsPaths.kind == JObject, "Paths config JSON object must be a dictionary"
     for k, v in jsPaths.fields.pairs:

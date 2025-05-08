@@ -56,6 +56,10 @@ proc runApp() =
       stderr.writeLine("> -v:", v)
     quit(QuitSuccess)
 
+  if versionOpts.len == 0:
+    stderr.writeLine("> No available version specs, exiting")
+    quit(QuitFailure)
+
   var versionSpec = processVersionSpec(argData.versionSpec, versionOpts)
   if versionSpec == "":
     var versionSpecOpts = join(versionOpts, ", ")

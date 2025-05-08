@@ -6,6 +6,7 @@ import constants
 import configdata
 import configjson
 import configyaml
+import errors
 
 proc readConfigFile(cfgPath: string): ref ConfigData =
   if splitFile(Path(cfgPath)).ext == ".json":
@@ -27,11 +28,19 @@ proc readConfig*(userConfPath: string = ""): ref ConfigData =
     confPathList = @[Path(userConfPath)]
 
   result = new ConfigData
+  var fileConfData: ref ConfigData
   for p in confPathList:
     if not p.fileExists:
       continue
 
-    let fileConfData = readConfigFile($p)
+    stderr.writeLine("> Reading config file: ", p)
+    try:
+      fileConfData = readConfigFile($p)
+    except ConfigError as e:
+      stderr.writeLine("> Config error: ", e.msg)
+    if fileConfData == nil:
+      continue
+
     for k, v in fileConfData.paths.pairs:
       result.paths[k] = v
     for k, v in fileConfData.switches.pairs:
