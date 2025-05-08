@@ -5,7 +5,7 @@ import jsonschema
 
 jsonSchema:
   ConfigSchema:
-    paths : any
+    paths ?: any
     switches ?: any
     envs ?: any
 

@@ -30,10 +30,11 @@ proc readConfigRawJSON*(jsConfig: JsonNode): ref ConfigData =
 
   result = new(ConfigData)
   let jsPaths = jsConfig["paths"]
-  doAssert jsPaths.kind == JObject, "Paths config JSON object must be a dictionary"
-  for k, v in jsPaths.fields.pairs:
-    doAssert v.kind == JString, "Path values must be string"
-    result.paths[k] = v.str
+  if jsPaths != nil and jsPaths.kind != JNull:
+    doAssert jsPaths.kind == JObject, "Paths config JSON object must be a dictionary"
+    for k, v in jsPaths.fields.pairs:
+      doAssert v.kind == JString, "Path values must be string"
+      result.paths[k] = v.str
 
   let jsSwitches = jsConfig.getOrDefault("switches")
   if jsSwitches != nil and jsSwitches.kind != JNull:
