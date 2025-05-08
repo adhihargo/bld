@@ -18,17 +18,6 @@ proc getArgData(): ref ArgumentsData =
     stderr.writeLine("> Command line error: ", e.msg)
     quit(QuitFailure)
 
-proc getConfigData(argData: ref ArgumentsData): ref ConfigData =
-  if argData == nil:
-    return
-
-  try:
-    let confPath = getConfigPath(argData.configPath)
-    result = readConfig(confPath)
-  except ConfigError as e:
-    stderr.writeLine("> Config error: ", e.msg)
-    quit(QuitFailure)
-
 proc getMatchingVersionOpts(
     versionSpec: string, versionOpts: seq[string]
 ): seq[string] {.inline.} =
@@ -57,7 +46,7 @@ proc processCommandStr(versionSpec: string, passedArgs: string, confData: ref Co
 proc runApp() =
   let
     argData = getArgData()
-    confData = getConfigData(argData)
+    confData = readConfig(argData.configPath)
     versionOpts = sorted(confData.paths.keys.toSeq)
 
   if argData.commandType == cmdList:

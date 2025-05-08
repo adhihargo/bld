@@ -1,29 +1,44 @@
 import std/files
-import std/os
 import std/paths
+import std/tables
 
 import constants
 import configdata
 import configjson
 import configyaml
-import errors
 
-proc getConfigPath*(cfgPath: string): string =
-  if cfgPath != "":
-    if not cfgPath.fileExists:
-      raise newException(ConfigError, "File does not exist: " & cfgPath)
-    return cfgPath
-
-  let
-    cfgAppPath = Path(CONFIG_YAML_NAME)
-    cfgHomePath = expandTilde(Path("~") / cfgAppPath)
-  if cfgHomePath.fileExists:
-    return $cfgHomePath
-  else:
-    return $cfgAppPath
-
-proc readConfig*(cfgPath: string): ref ConfigData =
+proc readConfigFile(cfgPath: string): ref ConfigData =
   if splitFile(Path(cfgPath)).ext == ".json":
     return readConfigJSON(cfgPath)
   else:
     return readConfigYAML(cfgPath)
+
+proc readConfig*(userConfPath: string = ""): ref ConfigData =
+  let
+    confJsonName = Path(CONFIG_JSON_NAME)
+    confYamlName = Path(CONFIG_YAML_NAME)
+  var
+    confPathList = @[expandTilde(Path("~") / confJsonName),
+                     expandTilde(Path("~") / confYamlName),
+                     confJsonName.absolutePath,
+                     confYamlName.absolutePath
+    ]
+  if userConfPath != "":
+    confPathList = @[Path(userConfPath)]
+
+  result = new ConfigData
+  for p in confPathList:
+    if not p.fileExists:
+      continue
+
+    let fileConfData = readConfigFile($p)
+    for k, v in fileConfData.paths.pairs:
+      result.paths[k] = v
+    for k, v in fileConfData.switches.pairs:
+      result.switches[k] = v
+    for k, v in fileConfData.envs.pairs:
+      result.envs[k] = v
+
+when isMainModule:
+  let confData = readConfig()
+  echo "confData: ", confData[]
