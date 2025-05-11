@@ -16,7 +16,7 @@ proc readConfigFileJSON(filePath: string): JsonNode =
   let jsonFile = newFileStream(filePath)
   doAssert jsonFile != nil, "Unable to open config file " & filePath
 
-  var jsConfig: JsonNode = nil
+  var jsConfig = newJNull()
   try:
     jsConfig = parseJson(jsonFile)
   except JsonParsingError as e:
@@ -25,27 +25,29 @@ proc readConfigFileJSON(filePath: string): JsonNode =
   return jsConfig
 
 proc readConfigRawJSON*(jsConfig: JsonNode): ref ConfigData =
-  doAssert jsConfig != nil, "Invalid config JSON data"
+  doAssert jsConfig.kind != JNull, "Invalid config JSON data"
   doAssert jsConfig.isValidConfig, "Invalid config JSON schema"
 
   result = new(ConfigData)
-  let jsPaths = jsConfig.getOrDefault("paths")
-  if jsPaths != nil and jsPaths.kind != JNull:
+  let jsPaths = jsConfig.fields.getOrDefault("paths", newJNull())
+  if jsPaths.kind != JNull:
     doAssert jsPaths.kind == JObject, "Paths config JSON object must be a dictionary"
-    for k, v in jsPaths.fields.pairs:
-      doAssert v.kind == JString, "Path values must be string"
-      result.paths[k] = v.str
+    try:
+      result.paths = jsPaths.jsonTo(OrderedTable[string, string])
+    except JsonKindError as e:
+      raise newException(ConfigError, e.msg)
 
-  let jsSwitches = jsConfig.getOrDefault("switches")
-  if jsSwitches != nil and jsSwitches.kind != JNull:
+  let jsSwitches = jsConfig.fields.getOrDefault("switches", newJNull())
+  if jsSwitches.kind != JNull:
     doAssert jsSwitches.kind == JObject,
       "Switches config JSON object must be a dictionary"
-    for k, v in jsSwitches.fields.pairs:
-      doAssert v.kind == JString, "Switches values must be string"
-      result.switches[k] = v.str
+    try:
+      result.switches = jsSwitches.jsonTo(OrderedTable[string, string])
+    except JsonKindError as e:
+      raise newException(ConfigError, e.msg)
 
-  let jsEnvs = jsConfig.getOrDefault("envs")
-  if jsEnvs != nil and jsSwitches.kind != JNull:
+  let jsEnvs = jsConfig.fields.getOrDefault("envs", newJNull())
+  if jsEnvs.kind != JNull:
     doAssert jsEnvs.kind == JObject, "Envs config JSON object must be a dictionary"
     for verSpec, envJSONDict in jsEnvs.fields.pairs: # VERSION -> ENVTABLE
       doAssert envJSONDict.kind == JObject,
