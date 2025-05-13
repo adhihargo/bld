@@ -14,6 +14,10 @@ proc readConfigFile(cfgPath: string): ref ConfigData =
   else:
     return readConfigYAML(cfgPath)
 
+proc editConfigFile*(extraTblPaths: OrderedTable[string, string]) =
+  let confPath = $expandTilde(Path("~") / Path(CONFIG_JSON_NAME))
+  editConfigFileJSON(confPath, extraTblPaths)
+
 proc readConfig*(userConfPath: string = ""): ref ConfigData =
   let
     confJsonName = Path(CONFIG_JSON_NAME)

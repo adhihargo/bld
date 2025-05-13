@@ -1,4 +1,5 @@
 import std/json
+import std/jsonutils
 import std/sequtils
 import std/streams
 import std/strutils
@@ -55,7 +56,11 @@ proc readConfigRawJSON*(jsConfig: JsonNode): ref ConfigData =
       for envK, envV in envJSONDict.fields.pairs: # ENVVAR -> VALUELIST
         doAssert envV.kind == JString or (
           envV.kind == JArray and
-          all(envV.elems, proc(v: JsonNode): bool = v.kind == JString)
+          all(
+            envV.elems,
+            proc(v: JsonNode): bool =
+              v.kind == JString,
+          )
         ), "Environment variable values must be a string or a list of strings"
 
     for verSpec, envJSONDict in jsEnvs.fields.pairs: # VERSION -> ENVTABLE
@@ -63,7 +68,11 @@ proc readConfigRawJSON*(jsConfig: JsonNode): ref ConfigData =
       for envK, envV in envJSONDict.fields.pairs: # ENVVAR -> VALUELIST
         case envV.kind
         of JArray:
-          envTable[envK] = map(envV.elems, proc(j: JsonNode): string = return j.str)
+          envTable[envK] = map(
+            envV.elems,
+            proc(j: JsonNode): string =
+              return j.str,
+          )
         of JString:
           envTable[envK] = @[envV.str]
         else:
@@ -74,8 +83,41 @@ proc readConfigJSON*(cfgPath: string): ref ConfigData =
   let jsConfig = readConfigFileJSON(cfgPath)
   result = readConfigRawJSON(jsConfig)
 
+proc writeConfigFileJSON(confPath: string, jsConfig: JsonNode) =
+  let jsonFile = newFileStream(confPath, fmWrite)
+  defer:
+    jsonFile.close
+  jsonFile.write(jsConfig.pretty)
+
+proc editConfigFileJSON*(
+    confPath: string, extraTblPaths: OrderedTable[string, string]
+) =
+  let jsConfig = readConfigFileJSON(confPath)
+  stderr.writeLine("> Reading existing config file: " & confPath)
+  try:
+    doAssert jsConfig.kind == JObject
+    let jsPaths = jsConfig.fields.getOrDefault("paths", newJNull())
+    var tblPaths = jsPaths.jsonTo(OrderedTable[string, string])
+    for k, v in extraTblPaths:
+      tblPaths[k] = v
+    jsConfig["paths"] = tblPaths.toJson
+  except JsonKindError as e:
+    raise newException(ConfigError, e.msg)
+
+  writeConfigFileJSON(confPath, jsConfig)
+
 when isMainModule:
+  import std/paths
   import constants
+
+  try:
+    let
+      extraTblPaths = {"A": "C01", "B": "B01"}.toOrderedTable
+      confPath = $expandTilde(Path("~") / Path(CONFIG_JSON_NAME))
+    editConfigFileJSON(confPath, extraTblPaths)
+  except ConfigError as e:
+    stderr.writeLine("> Config error: " & e.msg)
+    quit(QuitFailure)
 
   var confData: ref ConfigData
   try:

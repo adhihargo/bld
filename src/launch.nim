@@ -11,6 +11,7 @@ import config
 import configdata
 import envvars
 import errors
+import fileid
 
 proc getArgData(): ref ArgumentsData =
   try:
@@ -45,6 +46,25 @@ proc getVersionSpec(
     if fileExists(ctxTblPaths[k]):
       return k
 
+proc processExeArgs(exeArgList: seq[string]) =
+  if exeArgList.len == 0:
+    return
+
+  let exeTable = collect(initOrderedTable):
+    for exePath in exeArgList:
+      let exeVersion = getBlenderExeVersion(exePath)
+      if exeVersion != "":
+        {exeVersion: exePath}
+  if exeTable.len > 0:
+    stderr.writeLine("> Registering Blender versions: ")
+    for v in exeTable.keys:
+      stderr.writeLine("> -v:", v)
+    editConfigFile(exeTable)
+    quit(QuitSuccess)
+  else:
+    stderr.writeLine("> No recognized Blender binary in argument list, exiting.")
+    quit(QuitFailure)
+
 proc processCommandStr(
     versionSpec: string, passedArgs: string, confData: ref ConfigData
 ): string =
@@ -67,11 +87,15 @@ proc runApp() =
       stderr.writeLine("> -v:", v)
     quit(QuitSuccess)
 
+  # check and register executables passed as arguments.
+  let exeArgList = getArgsExeList(argData.filePathList)
+  processExeArgs(exeArgList)
+
   if versionOpts.len == 0:
     stderr.writeLine("> No available version specs, exiting")
     quit(QuitFailure)
 
-  var versionSpec = getVersionSpec(argData.versionSpec, confData.paths)
+  let versionSpec = getVersionSpec(argData.versionSpec, confData.paths)
   if versionSpec == "":
     var versionSpecOpts = join(versionOpts, ", ")
     stderr.writeLine("> Invalid version spec: ", argData.versionSpec)
