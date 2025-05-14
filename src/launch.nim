@@ -42,9 +42,21 @@ proc getVersionSpec(
     versionSpec: string, tblPaths: OrderedTable[string, string]
 ): string =
   let ctxTblPaths: OrderedTable[string, string] = getVersionTable(versionSpec, tblPaths)
-  for k in reversed(ctxTblPaths.keys.toSeq):
+  for k in ctxTblPaths.keys.toSeq.reversed:
     if fileExists(ctxTblPaths[k]):
       return k
+
+proc getCommandSwitches(
+    versionSpec: string, tblSwitches: OrderedTable[string, string]
+): string =
+  let ctxTblSwitches = getVersionTable(versionSpec, tblSwitches)
+  for v in ctxTblSwitches.values.toSeq.reversed:
+    return v
+
+proc getCommandEnvVars(
+    versionSpec: string, tblEnvVars: OrderedTable
+): OrderedTable[string, seq[string]] {.inline.} =
+  return tblEnvVars.getOrDefault(versionSpec)
 
 proc processExeArgs(exeArgList: seq[string]) =
   if exeArgList.len == 0:
@@ -64,16 +76,6 @@ proc processExeArgs(exeArgList: seq[string]) =
   else:
     stderr.writeLine("> No recognized Blender binary in argument list, exiting.")
     quit(QuitFailure)
-
-proc processCommandStr(
-    versionSpec: string, passedArgs: string, confData: ref ConfigData
-): string =
-  let
-    binPath = confData.paths.getOrDefault(versionSpec)
-    cmdSwitches = confData.switches.getOrDefault(versionSpec)
-  if not fileExists(binPath):
-    stderr.writeLine("> Nonexistent binary path: ", binPath)
-  return [binPath, passedArgs, cmdSwitches].join(" ")
 
 proc runApp() =
   let
@@ -102,10 +104,13 @@ proc runApp() =
     stderr.writeLine("> Available version specs: ", versionSpecOpts)
     quit(QuitFailure)
 
-  let versionEnvVars = confData.envs.getOrDefault(versionSpec)
-  applyEnvVars(versionEnvVars)
+  let
+    cmdBinPath = confData.paths.getOrDefault(versionSpec)
+    cmdSwitches = getCommandSwitches(argData.versionSpec, confData.switches)
+    cmdEnvVars = getCommandEnvVars(argData.versionSpec, confData.envs)
+  applyEnvVars(cmdEnvVars)
 
-  let cmdStr = processCommandStr(versionSpec, argData.passedArgs, confData)
+  let cmdStr = [cmdBinPath, argData.passedArgs, cmdSwitches].join(" ")
   stderr.writeLine("> Command: ", cmdStr)
   discard execCmd(cmdStr)
 
