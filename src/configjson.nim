@@ -10,7 +10,7 @@ import errors
 
 onFailedAssert(msg):
   var submsg = msg
-  submsg = msg.substr(max(0, msg.rfind("` ") + 1))
+  submsg = msg.substr(max(0, msg.rfind("` ") + 2))
   raise (ref ConfigError)(msg: submsg)
 
 proc readConfigFileJSON(filePath: string): JsonNode =

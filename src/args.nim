@@ -1,6 +1,7 @@
 import std/os
 import std/parseopt
 import std/strformat
+import std/strutils
 
 import errors
 
@@ -15,6 +16,11 @@ type
     configPath*: string
     passedArgs*: string
 
+onFailedAssert(msg):
+  var submsg = msg
+  submsg = msg.substr(max(0, msg.rfind("` ") + 2))
+  raise (ref CommandLineError)(msg: submsg)
+
 proc printHelp() =
   let binName = lastPathPart(getAppFilename())
   echo &"{binName} FILE_ARG --v:VERSION_SPEC -c:CONFIG_PATH FILE_ARG* - \n"
@@ -26,7 +32,10 @@ FILE_ARG*		Any number of file arguments. Ones
 			paths.
 -v:VERSION_SPEC		Specify version spec as listed as a
 			key in config file's 'paths' section.
--c/--conf=CONFIG_PATH	Specify custom path for config file.
+-c/--conf=CONFIG_PATH	Specify custom path for config
+			file. This overrides default
+			behavior of sequentially reading
+			predefined config file paths.
 -l/--list		List all version specs registered
 			for the launcher, or if -v is used,
 			ones prefixed with VERSION_SPEC.
@@ -52,8 +61,7 @@ proc parseArgsRaw(): ref ArgumentsData =
     elif p.key in ["v"]:
       result.versionSpec = p.val
     elif p.key in ["c", "conf"]:
-      if p.val == "":
-        raise newException(CommandLineError, "-c/--conf needs filepath argument")
+      doAssert p.val != "", "-c/--conf needs filepath argument"
       result.configPath = p.val
     elif p.key in ["l", "list"]:
       result.commandType = cmdList
