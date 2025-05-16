@@ -1,5 +1,4 @@
 import std/algorithm
-import std/os
 import std/osproc
 import std/sequtils
 import std/strutils
@@ -7,6 +6,7 @@ import std/sugar
 import std/tables
 
 import args
+import cmds
 import config
 import configdata
 import envvars
@@ -19,44 +19,6 @@ proc getArgData(): ref ArgumentsData =
   except CommandLineError as e:
     stderr.writeLine("> Command line error: ", e.msg)
     quit(QuitFailure)
-
-proc getVersionTable(
-    versionSpec: string, tblPaths: OrderedTable[string, string]
-): OrderedTable[string, string] {.inline.} =
-  return
-    if versionSpec == "":
-      tblPaths
-    else:
-      collect(initOrderedTable()):
-        for k, v in tblPaths.pairs:
-          if k.startsWith(versionSpec):
-            {k: v}
-
-proc getVersionOpts(
-    versionSpec: string, tblPaths: OrderedTable[string, string]
-): seq[string] =
-  let ctxTblPaths: OrderedTable[string, string] = getVersionTable(versionSpec, tblPaths)
-  return ctxTblPaths.keys.toSeq
-
-proc getVersionSpec(
-    versionSpec: string, tblPaths: OrderedTable[string, string]
-): string =
-  let ctxTblPaths: OrderedTable[string, string] = getVersionTable(versionSpec, tblPaths)
-  for k in ctxTblPaths.keys.toSeq.reversed:
-    if fileExists(ctxTblPaths[k]):
-      return k
-
-proc getCommandSwitches(
-    versionSpec: string, tblSwitches: OrderedTable[string, string]
-): string =
-  let ctxTblSwitches = getVersionTable(versionSpec, tblSwitches)
-  for v in ctxTblSwitches.values.toSeq.reversed:
-    return v
-
-proc getCommandEnvVars(
-    versionSpec: string, tblEnvVars: OrderedTable
-): OrderedTable[string, seq[string]] {.inline.} =
-  return tblEnvVars.getOrDefault(versionSpec)
 
 proc processExeArgs(exeArgList: seq[string]) =
   if exeArgList.len == 0:
@@ -99,13 +61,13 @@ proc runApp() =
 
   let versionSpec = getVersionSpec(argData.versionSpec, confData.paths)
   if versionSpec == "":
-    var versionSpecOpts = join(versionOpts, ", ")
+    var versionOptsStr = join(versionOpts, ", ")
     stderr.writeLine("> Invalid version spec: ", argData.versionSpec)
-    stderr.writeLine("> Available version specs: ", versionSpecOpts)
+    stderr.writeLine("> Available version specs: ", versionOptsStr)
     quit(QuitFailure)
 
   let
-    cmdBinPath = confData.paths.getOrDefault(versionSpec)
+    cmdBinPath = getCommandBinPath(versionSpec, confData.paths)
     cmdSwitches = getCommandSwitches(argData.versionSpec, confData.switches)
     cmdEnvVars = getCommandEnvVars(argData.versionSpec, confData.envs)
   applyEnvVars(cmdEnvVars)
