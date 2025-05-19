@@ -6,7 +6,7 @@ import std/sugar
 import std/tables
 
 import args
-import cmds
+import cmdtable
 import config
 import configdata
 import envvars

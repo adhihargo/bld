@@ -1,7 +1,7 @@
 import std/nre
+import std/options
 import std/os
 import std/osproc
-import std/options
 import std/re
 import std/sequtils
 
