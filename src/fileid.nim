@@ -2,25 +2,24 @@ import std/nre
 import std/options
 import std/os
 import std/osproc
-import std/re
 import std/sequtils
 
 let
-  BLEND_RE = re.re"\.blend\d*$"
-  EXE_VERSION_RE = nre.re"^Blender (.+)"
+  BLEND_RE = re"\.blend\d*$"
+  EXE_VERSION_RE = re"^Blender (.+)"
 
 proc getArgsBlendList*(fileList: seq[string]): seq[string] =
   return filter(
     fileList,
     proc(fn: string): bool =
-      fn.endsWith(BLEND_RE),
+      fn.contains(BLEND_RE),
   )
 
 proc getArgsExeList*(fileList: seq[string]): seq[string] =
   return filter(
     fileList,
     proc(fn: string): bool =
-      not fn.endsWith(BLEND_RE),
+      not fn.contains(BLEND_RE),
   )
 
 proc getBlenderExeVersion*(filePath: string): string =
