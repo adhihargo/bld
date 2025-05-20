@@ -14,6 +14,7 @@ type
     paths*: OrderedTable[string, string]
     switches*: OrderedTable[string, string]
     envs*: OrderedTable[string, OrderedTable[string, seq[string]]]
+  PathTable* = OrderedTable[string, string]
 
 proc isValidConfig*(jsonNode: JsonNode): bool =
   return isValid(jsonNode, ConfigSchema)

@@ -1,5 +1,3 @@
-import cmdtable
-import configdata
 import std/nre
 import std/options
 import std/os
@@ -8,6 +6,9 @@ import std/sequtils
 import std/streams
 import std/strutils
 import std/sugar
+
+import cmdtable
+import configdata
 
 let
   BLEND_RE = re"\.blend\d*$"
@@ -41,12 +42,12 @@ proc writeBlenderFileIdScript() =
       f_obj.close()
     f_obj.write(FILEID_BPY_CODE)
 
-proc execBlenderFileId(fileList: seq[string], confData: ref ConfigData): seq[string] =
+proc execBlenderFileId(fileList: seq[string], tblPaths: PathTable): seq[string] =
   writeBlenderFileIdScript()
 
   let
-    versionSpec = getVersionSpec("", confData.paths)
-    cmdBinPath = getCommandBinPath(versionSpec, confData.paths)
+    versionSpec = getVersionSpec("", tblPaths)
+    cmdBinPath = getCommandBinPath(versionSpec, tblPaths)
   if not fileExists(cmdBinPath):
     stderr.writeLine("> File ID binary path not found: ", cmdBinPath)
     return
@@ -69,11 +70,9 @@ proc execBlenderFileId(fileList: seq[string], confData: ref ConfigData): seq[str
         l
 
 proc getBlenderFileVersionList*(
-    fileList: seq[string], confData: ref ConfigData
+    fileList: seq[string], tblPaths: PathTable
 ): seq[(array[0..2, string], string)] =
-  doAssert confData != nil, "Must pass valid config data"
-
-  let execResult = execBlenderFileId(fileList, confData)
+  let execResult = execBlenderFileId(fileList, tblPaths)
   if execResult.len == 0:
     return
 
@@ -124,11 +123,13 @@ when isMainModule:
 
   import config
   let confData = readConfig()
+  if confData == nil:
+    quit(QuitFailure)
 
-  let versionList = getBlenderFileVersionList(blendList, confData)
+  let versionList = getBlenderFileVersionList(blendList, confData.paths)
   for vp in versionList:
     echo "vp: ", vp
-  
+
   for exePath in exeList:
     echo "getBlenderExeVersion(exePath): ", getBlenderExeVersion(exePath)
     echo "exePath: ", exePath

@@ -34,7 +34,7 @@ proc readConfigRawJSON*(jsConfig: JsonNode): ref ConfigData =
   if jsPaths.kind != JNull:
     doAssert jsPaths.kind == JObject, "Paths config JSON object must be a dictionary"
     try:
-      result.paths = jsPaths.jsonTo(OrderedTable[string, string])
+      result.paths = jsPaths.jsonTo(PathTable)
     except JsonKindError as e:
       raise newException(ConfigError, e.msg)
 
@@ -43,7 +43,7 @@ proc readConfigRawJSON*(jsConfig: JsonNode): ref ConfigData =
     doAssert jsSwitches.kind == JObject,
       "Switches config JSON object must be a dictionary"
     try:
-      result.switches = jsSwitches.jsonTo(OrderedTable[string, string])
+      result.switches = jsSwitches.jsonTo(PathTable)
     except JsonKindError as e:
       raise newException(ConfigError, e.msg)
 
@@ -90,14 +90,14 @@ proc writeConfigFileJSON(confPath: string, jsConfig: JsonNode) =
   jsonFile.write(jsConfig.pretty)
 
 proc editConfigFileJSON*(
-    confPath: string, extraTblPaths: OrderedTable[string, string]
+    confPath: string, extraTblPaths: PathTable
 ) =
   let jsConfig = readConfigFileJSON(confPath)
   stderr.writeLine("> Reading existing config file: " & confPath)
   try:
     doAssert jsConfig.kind == JObject
     let jsPaths = jsConfig.fields.getOrDefault("paths", newJNull())
-    var tblPaths = jsPaths.jsonTo(OrderedTable[string, string])
+    var tblPaths = jsPaths.jsonTo(PathTable)
     for k, v in extraTblPaths:
       tblPaths[k] = v
     jsConfig["paths"] = tblPaths.toJson
