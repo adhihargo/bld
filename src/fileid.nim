@@ -13,11 +13,32 @@ import configdata
 let
   BLEND_RE = re"\.blend\d*$"
   EXE_VERSION_RE = re"^Blender (.+)"
-  BLEND_VERSION_RE = re"v(?<major>\d+)\.(?<minor>\d+)\.(?<patch>\d+)"
+  BLEND_VERSION_RE = re"(?<major>\d+)\.(?<minor>\d+)\.?(?<patch>\d+)?"
 
 const
   FILEID_BPY_NAME = "fileid_bpy.py"
   FILEID_BPY_CODE = staticRead(FILEID_BPY_NAME)
+
+type
+  VersionTriplet* = array[0 .. 2, int]
+
+proc `<=`*(a, b: VersionTriplet): bool =
+  a[0] < b[0] or (a[0] == b[0] and a[1] <= b[1])
+
+proc toVersionTriplet*(versionStr: string): Option[VersionTriplet] =
+  let optMatch = versionStr.find(BLEND_VERSION_RE)
+  if optMatch.isSome:
+    var
+      match = optMatch.get()
+      capts = match.captures.toSeq
+      verInts = [0, 0, 0]
+    for i, v in capts:
+      verInts[i] =
+        if v.isSome():
+          v.get().parseInt()
+        else:
+          0
+    return some(verInts)
 
 proc getArgsBlendList*(fileList: seq[string]): seq[string] =
   return filter(
@@ -71,7 +92,7 @@ proc execBlenderFileId(fileList: seq[string], tblPaths: PathTable): seq[string] 
 
 proc getBlenderFileVersionList*(
     fileList: seq[string], tblPaths: PathTable
-): seq[(array[0..2, string], string)] =
+): seq[(VersionTriplet, string)] =
   let execResult = execBlenderFileId(fileList, tblPaths)
   if execResult.len == 0:
     return
@@ -79,14 +100,12 @@ proc getBlenderFileVersionList*(
   for l in execResult:
     let
       versionPairRaw = l.split("||", maxsplit = 1)
-      optVerMatch = versionPairRaw[0].find(BLEND_VERSION_RE)
-    if optVerMatch.isNone():
+      optVersionInts = versionPairRaw[0].toVersionTriplet()
+    if optVersionInts.isNone():
       continue
 
-    let
-      mc = optVerMatch.get().captures
-      versionArray = [mc[0], mc[1], mc[2]]
-    result.add((versionArray, versionPairRaw[1]))
+    let versionInts = optVersionInts.get()
+    result.add((versionInts, versionPairRaw[1]))
 
 proc getBlenderExeVersion*(filePath: string): string =
   if not fileExists(filePath):
