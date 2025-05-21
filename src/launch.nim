@@ -1,4 +1,6 @@
 import std/algorithm
+import std/options
+import std/os
 import std/osproc
 import std/sequtils
 import std/strutils
@@ -39,6 +41,34 @@ proc processExeArgs(exeArgList: seq[string]) =
     stderr.writeLine("> No recognized Blender binary in argument list, exiting.")
     quit(QuitFailure)
 
+proc processBlendArgs(blendArgList: seq[string], tblPaths: PathTable) =
+  if blendArgList.len == 0:
+    return
+
+  let
+    fileVersionList = getBlenderFileVersionList(blendArgList, tblPaths)
+    verTripletPaths = tblPaths.pairs.toSeq.map(
+      proc(vPair: (string, string)): (VersionTriplet, string, string) =
+        let optVerTriplet = vPair[0].toVersionTriplet
+        let verTriplet =
+          if optVerTriplet.isNone:
+            [-1, -1, -1]
+          else:
+            optVerTriplet.get()
+        (verTriplet, vPair[0], vPair[1])
+    ).sortedByIt((it[0][0], it[0][1], it[0][2]))
+  for fPair in fileVersionList:
+    for vPair in verTripletPaths:
+      if vPair[0] >= fPair[0]:
+        let
+          cmdBinPath = vPair[2]
+          cmdStr = [cmdBinPath, fPair[1]].quoteShellCommand
+        stderr.writeLine("> Command: ", cmdStr)
+        discard execCmd(cmdStr)
+        break
+
+  quit(QuitSuccess)
+
 proc runApp() =
   let
     argData = getArgData()
@@ -58,6 +88,11 @@ proc runApp() =
   if versionOpts.len == 0:
     stderr.writeLine("> No available version specs, exiting")
     quit(QuitFailure)
+
+  # passed blend file arguments directly, call each with appropriate
+  # Blender version if available.
+  let blendArgList = getArgsBlendList(argData.filePathList)
+  processBlendArgs(blendArgList, confData.paths)
 
   let versionSpec = getVersionSpec(argData.versionSpec, confData.paths)
   if versionSpec == "":
