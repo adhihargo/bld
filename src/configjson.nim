@@ -100,6 +100,7 @@ proc editConfigFileJSON*(
     var tblPaths = jsPaths.jsonTo(PathTable)
     for k, v in extraTblPaths:
       tblPaths[k] = v
+    tblPaths.sort(cmp)
     jsConfig["paths"] = tblPaths.toJson
   except JsonKindError as e:
     raise newException(ConfigError, e.msg)

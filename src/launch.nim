@@ -74,6 +74,7 @@ proc runApp() =
     argData = getArgData()
     confData = readConfig(argData.configPath)
     versionOpts = getVersionOpts(argData.versionSpec, confData.paths)
+  confData.sort()
 
   if argData.commandType == cmdList:
     stderr.writeLine("> Blender versions registered:")
