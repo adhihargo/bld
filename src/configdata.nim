@@ -22,18 +22,15 @@ proc isValidConfig*(jsonNode: JsonNode): bool =
   return isValid(jsonNode, ConfigSchema)
 
 proc sort*(confData: ref ConfigData) =
+  proc tblCmp(x, y: (string, auto)): int =
+    cmp(x[0], y[0])
+
   confData.paths.sort(cmp)
   confData.switches.sort(cmp)
-  confData.envs.sort(
-    proc(x, y: (string, EnvVarMapping)): int =
-      cmp(x[0], y[0])
-  )
+  confData.envs.sort(tblCmp)
   for k in confData.envs.keys:
     var v = confData.envs[k]
-    v.sort(
-      proc(x, y: (string, seq[string])): int =
-        cmp(x[0], y[0])
-    )
+    v.sort(tblCmp)
     confData.envs[k] = v
 
 proc `$`*(confData: ref ConfigData): string =

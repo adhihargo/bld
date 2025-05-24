@@ -104,8 +104,8 @@ proc runApp() =
 
   let
     cmdBinPath = getCommandBinPath(versionSpec, confData.paths)
-    cmdSwitches = getCommandSwitches(argData.versionSpec, confData.switches)
-    cmdEnvVars = getCommandEnvVars(argData.versionSpec, confData.envs)
+    cmdSwitches = getCommandSwitches(versionSpec, confData.switches)
+    cmdEnvVars = getCommandEnvVars(versionSpec, confData.envs)
   applyEnvVars(cmdEnvVars)
 
   let cmdStr = [cmdBinPath, argData.passedArgs, cmdSwitches].join(" ")
