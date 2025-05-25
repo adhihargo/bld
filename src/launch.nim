@@ -14,6 +14,7 @@ import configdata
 import envvars
 import errors
 import fileid
+import registry
 
 proc getArgData(): ref ArgumentsData =
   try:
@@ -81,6 +82,15 @@ proc runApp() =
     for v in versionOpts:
       stderr.writeLine("> -v:", v)
     quit(QuitSuccess)
+  elif argData.commandType == cmdRegister:
+    stderr.writeLine("> Registering self to handle .blend files")
+    let binPath = getAppFilename()
+    if registerExtHandler(binPath):
+      stderr.writeLine("> Handler registration succeeded")
+      quit(QuitSuccess)
+    else:
+      stderr.writeLine("> Handler registration failed")
+      quit(QuitFailure)
 
   # check and register executables passed as arguments.
   let exeArgList = getArgsExeList(argData.filePathList)
