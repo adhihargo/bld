@@ -10,17 +10,17 @@ import std/sugar
 import cmdtable
 import configdata
 
-let
-  BLEND_RE = re"\.blend\d*$"
-  EXE_VERSION_RE = re"^Blender (.+)"
-  BLEND_VERSION_RE = re"(?<major>\d+)\.(?<minor>\d+)\.?(?<patch>\d+)?"
-
 const
   FILEID_BPY_NAME = "fileid_bpy.py"
   FILEID_BPY_CODE = staticRead(FILEID_BPY_NAME)
 
-type
-  VersionTriplet* = array[0 .. 2, int]
+let
+  BLEND_RE = re"\.blend\d*$"
+  EXE_VERSION_RE = re"^Blender (.+)"
+  BLEND_VERSION_RE = re"(?<major>\d+)\.(?<minor>\d+)\.?(?<patch>\d+)?"
+  FILEID_SCR_PATH = joinPath(getAppFilename().parentDir(), FILEID_BPY_NAME)
+
+type VersionTriplet* = array[0 .. 2, int]
 
 proc `<=`*(a, b: VersionTriplet): bool =
   a[0] < b[0] or (a[0] == b[0] and a[1] <= b[1])
@@ -55,10 +55,9 @@ proc getArgsExeList*(fileList: seq[string]): seq[string] =
   )
 
 proc writeBlenderFileIdScript() =
-  let fileid_scr_path = joinPath(getAppFilename().parentDir(), FILEID_BPY_NAME)
-  if not fileExists(fileid_scr_path):
-    let f_obj = newFileStream(fileid_scr_path, fmWrite)
-    doAssert f_obj != nil, "Unable to create script file " & fileid_scr_path
+  if not fileExists(FILEID_SCR_PATH):
+    let f_obj = newFileStream(FILEID_SCR_PATH, fmWrite)
+    doAssert f_obj != nil, "Unable to create script file " & FILEID_SCR_PATH
     defer:
       f_obj.close()
     f_obj.write(FILEID_BPY_CODE)
@@ -76,7 +75,8 @@ proc execBlenderFileId(fileList: seq[string], tblPaths: PathTable): seq[string] 
   let
     fileListStr = fileList.quoteShellCommand
     commandStr = @[
-      cmdBinPath, "-b", "--factory-startup", "-P", FILEID_BPY_NAME, fileListStr
+      cmdBinPath, "-b", "--factory-startup", "-P", FILEID_SCR_PATH.quoteShell,
+      fileListStr,
     ].join(" ")
   var execResult: tuple[output: string, exitCode: int]
   try:
