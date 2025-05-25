@@ -9,6 +9,7 @@ type
   CommandType* = enum
     cmdExec
     cmdList
+    cmdPrintConf
     cmdRegister
 
   ArgumentsData* = object
@@ -16,7 +17,7 @@ type
     commandType*: CommandType
     versionSpec*: string
     filePathList*: seq[string]
-    configPath*: string
+    configPathList*: seq[string]
     passedArgs*: string
 
 onFailedAssert(msg):
@@ -26,7 +27,7 @@ onFailedAssert(msg):
 
 proc printHelp() =
   let binName = lastPathPart(getAppFilename())
-  echo &"{binName} FILE_ARG --v:VERSION_SPEC -c:CONFIG_PATH FILE_ARG* - \n"
+  echo &"{binName} FILE_ARG --v:VERSION_SPEC -c:CONFIG_PATH* FILE_ARG* - \n"
   echo """
 FILE_ARG*		Any number of file arguments. Ones
 			without .blend* extension assumed to
@@ -35,13 +36,15 @@ FILE_ARG*		Any number of file arguments. Ones
 			paths.
 -v:VERSION_SPEC		Specify version spec as listed as a
 			key in config file's 'paths' section.
--c/--conf=CONFIG_PATH	Specify custom path for config
-			file. This overrides default
+-c/--conf=CONFIG_PATH	Specify config file path,
+			repeatable. This overrides default
 			behavior of sequentially reading
 			predefined config file paths.
 -l/--list		List all version specs registered
 			for the launcher, or if -v is used,
 			ones prefixed with VERSION_SPEC.
+--print-conf		Print accumulated configuration
+			data.
 --register		[WINDOWS] Register this executable
 			as default handler for .blend files.
 -h/--help		Print help, then exit.
@@ -53,7 +56,7 @@ FILE_ARG*		Any number of file arguments. Ones
 
 proc parseArgsRaw(): ref ArgumentsData =
   var p = initOptParser(
-    shortNoVal = {'h', 'l'}, longNoVal = @["help", "list", "register", ""]
+    shortNoVal = {'h', 'l'}, longNoVal = @["help", "list", "print-conf", "register", ""]
   )
 
   result = (ref ArgumentsData)(commandType: cmdExec)
@@ -69,11 +72,13 @@ proc parseArgsRaw(): ref ArgumentsData =
       result.versionSpec = p.val
     elif p.key in ["c", "conf"]:
       doAssert p.val != "", "-c/--conf needs filepath argument"
-      result.configPath = p.val
+      result.configPathList.add(p.val)
     elif p.key in ["l", "list"]:
       result.commandType = cmdList
     elif p.key in ["h", "help"]:
       result.help = true
+    elif p.key in ["print-conf"]:
+      result.commandType = cmdPrintConf
     elif p.key in ["register"]:
       result.commandType = cmdRegister
     elif p.kind == cmdArgument:

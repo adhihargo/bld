@@ -1,6 +1,7 @@
 import std/files
 import std/os
 import std/paths
+import std/sequtils
 import std/sets
 import std/tables
 
@@ -20,12 +21,12 @@ proc editConfigFile*(extraTblPaths: PathTable) =
   let confPath = $expandTilde(Path("~") / Path(CONFIG_JSON_NAME))
   editConfigFileJSON(confPath, extraTblPaths)
 
-proc readConfig*(userConfPath: string = ""): ref ConfigData =
+proc readConfig*(userConfPathList: seq[string] = @[]): ref ConfigData =
   let
     confJsonName = Path(CONFIG_JSON_NAME)
     confYamlName = Path(CONFIG_YAML_NAME)
     confPathSet =
-      if userConfPath == "":
+      if userConfPathList.len == 0:
         [
           expandTilde(Path("~") / confJsonName),
           expandTilde(Path("~") / confYamlName),
@@ -33,7 +34,10 @@ proc readConfig*(userConfPath: string = ""): ref ConfigData =
           getAppDir().Path() / confYamlName,
         ].toOrderedSet
       else:
-        [Path(userConfPath)].toOrderedSet
+        userConfPathList.map(
+          proc(i: string): Path =
+            Path(i)
+        ).toOrderedSet
 
   result = new ConfigData
   var fileConfData: ref ConfigData

@@ -73,7 +73,7 @@ proc processBlendArgs(blendArgList: seq[string], tblPaths: PathTable) =
 proc runApp() =
   let
     argData = getArgData()
-    confData = readConfig(argData.configPath)
+    confData = readConfig(argData.configPathList)
     versionOpts = getVersionOpts(argData.versionSpec, confData.paths)
   confData.sort()
 
@@ -91,6 +91,10 @@ proc runApp() =
     else:
       stderr.writeLine("> Handler registration failed")
       quit(QuitFailure)
+  elif argData.commandType == cmdPrintConf:
+    stderr.writeLine("> Configuration data:")
+    stderr.writeLine($confData)
+    quit(QuitSuccess)
 
   # check and register executables passed as arguments.
   let exeArgList = getArgsExeList(argData.filePathList)
