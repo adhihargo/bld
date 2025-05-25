@@ -1,5 +1,6 @@
 import std/files
 import std/paths
+import std/sets
 import std/tables
 
 import constants
@@ -22,22 +23,23 @@ proc readConfig*(userConfPath: string = ""): ref ConfigData =
   let
     confJsonName = Path(CONFIG_JSON_NAME)
     confYamlName = Path(CONFIG_YAML_NAME)
-  var
-    confPathList = @[expandTilde(Path("~") / confJsonName),
-                     expandTilde(Path("~") / confYamlName),
-                     confJsonName.absolutePath,
-                     confYamlName.absolutePath
-    ]
+  var confPathSet = [
+    expandTilde(Path("~") / confJsonName),
+    expandTilde(Path("~") / confYamlName),
+    confJsonName.absolutePath,
+    confYamlName.absolutePath,
+  ].toOrderedSet
   if userConfPath != "":
-    confPathList = @[Path(userConfPath)]
+    confPathSet = [Path(userConfPath)].toOrderedSet
 
   result = new ConfigData
   var fileConfData: ref ConfigData
-  for p in confPathList:
+  stderr.writeLine("> Reading config file(s): ")
+  for p in confPathSet:
     if not p.fileExists:
       continue
 
-    stderr.writeLine("> Reading config file: ", p)
+    stderr.writeLine("> - ", p)
     try:
       fileConfData = readConfigFile($p)
     except ConfigError as e:
