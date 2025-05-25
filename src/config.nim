@@ -1,4 +1,5 @@
 import std/files
+import std/os
 import std/paths
 import std/sets
 import std/tables
@@ -23,14 +24,16 @@ proc readConfig*(userConfPath: string = ""): ref ConfigData =
   let
     confJsonName = Path(CONFIG_JSON_NAME)
     confYamlName = Path(CONFIG_YAML_NAME)
-  var confPathSet = [
-    expandTilde(Path("~") / confJsonName),
-    expandTilde(Path("~") / confYamlName),
-    confJsonName.absolutePath,
-    confYamlName.absolutePath,
-  ].toOrderedSet
-  if userConfPath != "":
-    confPathSet = [Path(userConfPath)].toOrderedSet
+    confPathSet =
+      if userConfPath == "":
+        [
+          expandTilde(Path("~") / confJsonName),
+          expandTilde(Path("~") / confYamlName),
+          getAppDir().Path() / confJsonName,
+          getAppDir().Path() / confYamlName,
+        ].toOrderedSet
+      else:
+        [Path(userConfPath)].toOrderedSet
 
   result = new ConfigData
   var fileConfData: ref ConfigData
@@ -56,4 +59,4 @@ proc readConfig*(userConfPath: string = ""): ref ConfigData =
 
 when isMainModule:
   let confData = readConfig()
-  echo "confData: ", confData[]
+  echo "confData: ", confData
