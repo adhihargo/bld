@@ -6,7 +6,7 @@ import std/sugar
 import std/tables
 
 proc getVersionTable*(
-    versionSpec: string, tblPaths: OrderedTable
+    versionSpec: string, tblPaths: OrderedTable, reverse: bool = false
 ): OrderedTable {.inline.} =
   return
     if versionSpec == "":
@@ -14,7 +14,7 @@ proc getVersionTable*(
     else:
       collect(initOrderedTable()):
         for k, v in tblPaths.pairs:
-          if k.startsWith(versionSpec):
+          if (reverse and versionSpec.startsWith(k)) or k.startsWith(versionSpec):
             {k: v}
 
 proc getVersionOpts*(
@@ -42,7 +42,7 @@ proc getCommandSwitches*(
     versionSpec: string, tblSwitches: OrderedTable[string, string]
 ): string =
   let
-    ctxTblSwitches = getVersionTable(versionSpec, tblSwitches)
+    ctxTblSwitches = getVersionTable(versionSpec, tblSwitches, true)
     tblSwitchesKeys = ctxTblSwitches.keys.toSeq.sorted(order = SortOrder.Descending)
   for k in tblSwitchesKeys:
     return ctxTblSwitches[k]
@@ -51,7 +51,7 @@ proc getCommandEnvVars*(
     versionSpec: string, tblEnvVars: OrderedTable
 ): OrderedTable[string, seq[string]] {.inline.} =
   let
-    ctxTblEnvVars = getVersionTable(versionSpec, tblEnvVars)
+    ctxTblEnvVars = getVersionTable(versionSpec, tblEnvVars, true)
     tblEnvVarsKeys = ctxTblEnvVars.keys.toSeq.sorted(order = SortOrder.Descending)
   for k in tblEnvVarsKeys:
     return ctxTblEnvVars[k]
