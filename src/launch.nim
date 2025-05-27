@@ -47,7 +47,7 @@ proc processBlendArgs(blendArgList: seq[string], tblPaths: PathTable) =
     return
 
   let
-    fileVersionList = getBlenderFileVersionList(blendArgList, tblPaths)
+    fileVersionTable = getBlenderFileVersionTable(blendArgList, tblPaths)
     verTripletPaths = tblPaths.pairs.toSeq.map(
       proc(vPair: (string, string)): (VersionTriplet, string, string) =
         let optVerTriplet = vPair[0].toVersionTriplet
@@ -57,13 +57,17 @@ proc processBlendArgs(blendArgList: seq[string], tblPaths: PathTable) =
           else:
             optVerTriplet.get()
         (verTriplet, vPair[0], vPair[1])
-    ).sortedByIt((it[0][0], it[0][1], it[0][2]))
-  for fPair in fileVersionList:
-    for vPair in verTripletPaths:
-      if vPair[0] >= fPair[0]:
+    )
+  for filePath in blendArgList:
+    let optFileVersion = fileVersionTable.getOrDefault(filePath)
+    if optFileVersion.isNone:
+      continue
+    for vTuple in verTripletPaths:
+      if vTuple[0] >= optFileVersion.get():
         let
-          cmdBinPath = vPair[2]
-          cmdStr = [cmdBinPath, fPair[1]].quoteShellCommand
+          versionSpec = vTuple[1]
+          cmdBinPath = vTuple[2]
+          cmdStr = [cmdBinPath, filePath].quoteShellCommand
         stderr.writeLine("> Command: ", cmdStr)
         discard execCmd(cmdStr)
         break

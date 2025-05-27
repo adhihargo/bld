@@ -6,6 +6,7 @@ import std/sequtils
 import std/streams
 import std/strutils
 import std/sugar
+import std/tables
 
 import cmdtable
 import configdata
@@ -73,7 +74,7 @@ proc execBlenderFileId(fileList: seq[string], tblPaths: PathTable): seq[string] 
     return
 
   let
-    fileListStr = fileList.quoteShellCommand
+    fileListStr = fileList.filter(fileExists).quoteShellCommand
     commandStr = @[
       cmdBinPath, "-b", "--factory-startup", "-P", FILEID_SCR_PATH.quoteShell,
       fileListStr,
@@ -90,13 +91,14 @@ proc execBlenderFileId(fileList: seq[string], tblPaths: PathTable): seq[string] 
       if l.startsWith("BLENDERv"):
         l
 
-proc getBlenderFileVersionList*(
+proc getBlenderFileVersionTable*(
     fileList: seq[string], tblPaths: PathTable
-): seq[(VersionTriplet, string)] =
+): OrderedTable[string, Option[VersionTriplet]] =
   let execResult = execBlenderFileId(fileList, tblPaths)
   if execResult.len == 0:
     return
 
+  var resultSeq: seq[(string, Option[VersionTriplet])]
   for l in execResult:
     let
       versionPairRaw = l.split("||", maxsplit = 1)
@@ -105,7 +107,8 @@ proc getBlenderFileVersionList*(
       continue
 
     let versionInts = optVersionInts.get()
-    result.add((versionInts, versionPairRaw[1]))
+    resultSeq.add((versionPairRaw[1], some(versionInts)))
+  return resultSeq.toOrderedTable
 
 proc getBlenderExeVersion*(filePath: string): string =
   if not fileExists(filePath):
@@ -145,9 +148,9 @@ when isMainModule:
   if confData == nil:
     quit(QuitFailure)
 
-  let versionList = getBlenderFileVersionList(blendList, confData.paths)
-  for vp in versionList:
-    echo "vp: ", vp
+  let versionTable = getBlenderFileVersionTable(blendList, confData.paths)
+  for fp, fv in versionTable.pairs:
+    echo fp, ": ", fv
 
   for exePath in exeList:
     echo "getBlenderExeVersion(exePath): ", getBlenderExeVersion(exePath)
