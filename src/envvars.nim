@@ -1,15 +1,45 @@
 import std/os
+import std/strformat
+import std/strtabs
 import std/strutils
 import std/tables
 
 import constants
+import errors
 
-proc applyEnvVars*(envvars: OrderedTable[string, seq[string]]) =
+onFailedAssert(msg):
+  var submsg = msg
+  submsg = msg.substr(max(0, msg.rfind("` ") + 2))
+  raise (ref ConfigError)(msg: submsg)
+
+proc finalizeEnvVars*(
+    envvars: OrderedTable[string, seq[string]]
+): owned(StringTableRef) =
+  result = newStringTable(modeCaseInsensitive)
   for k, v in envvars:
     var copyV = v
     let insIdx = v.find(ENV_PLACEHOLDER_ORI)
     if insIdx >= 0:
-      let oriV = getEnv(k)
-      if oriV != "":
+      let oriV = getEnv(k).strip(chars = {PathSep})
+      if oriV.strip() == "":
+        copyV.delete(insIdx)
+      else:
         copyV[insIdx] = oriV
-    putEnv(k, copyV.join($PathSep))
+    doAssert copyV.find(ENV_PLACEHOLDER_ORI) < 0,
+      &"[{k}] Placeholder for original value should be inserted at most once"
+    result[k] = copyV.join($PathSep)
+
+proc applyEnvVars*(envvars: StringTableRef) =
+  for k, v in envvars:
+    putEnv(k, v)
+
+when isMainModule:
+  try:
+    let
+      testEnvVars = {"PATH": @["ABC", "*", "DEF"]}.toOrderedTable()
+      finalEnvVars = testEnvVars.finalizeEnvVars()
+    for k, v in finalEnvVars.pairs:
+      echo k, ": ", v
+  except ConfigError as e:
+    stderr.writeLine("> Config error: ", e.msg)
+    quit(QuitFailure)
