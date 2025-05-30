@@ -55,3 +55,29 @@ proc getCommandEnvVars*(
     tblEnvVarsKeys = ctxTblEnvVars.keys.toSeq.sorted(order = SortOrder.Descending)
   for k in tblEnvVarsKeys:
     return ctxTblEnvVars[k]
+
+when isMainModule:
+  import config
+  import configdata
+
+  let
+    confData = readConfig()
+    versionSpec =
+      if paramCount() > 0:
+        paramStr(1)
+      else:
+        ""
+  confData.sort()
+
+  let
+    versionOpts = getVersionOpts(versionSpec, confData.paths)
+    versionSpec1 = getVersionSpec(versionSpec, confData.paths)
+    cmdBinPath = getCommandBinPath(versionSpec1, confData.paths)
+    cmdSwitches = getCommandSwitches(versionSpec1, confData.switches)
+    cmdEnvVars = getCommandEnvVars(versionSpec1, confData.envs)
+  echo ""
+  echo "versionOpts: ", versionOpts
+  echo "versionSpec1: ", versionSpec1
+  echo "cmdBinPath: ", cmdBinPath
+  echo "cmdSwitches: ", cmdSwitches
+  echo "cmdEnvVars: ", cmdEnvVars
