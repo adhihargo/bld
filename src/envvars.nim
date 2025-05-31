@@ -6,11 +6,18 @@ import std/tables
 
 import constants
 import errors
+import scriptdir
 
 onFailedAssert(msg):
   var submsg = msg
   submsg = msg.substr(max(0, msg.rfind("` ") + 2))
   raise (ref ConfigError)(msg: submsg)
+
+proc verifyEnvVar(key: string, value: string) {.inline.} =
+  if key in ["BLENDER_USER_SCRIPTS", "BLENDER_SYSTEM_SCRIPTS"]:
+    let verifyResult = verifyScriptDir(value)
+    if not verifyResult:
+      stderr.writeLine("> Warning: ", key, " path may not be usable: ", value)
 
 proc finalizeEnvVars*(
     envvars: OrderedTable[string, seq[string]]
@@ -27,7 +34,10 @@ proc finalizeEnvVars*(
         copyV[insIdx] = oriV
     doAssert copyV.find(ENV_PLACEHOLDER_ORI) < 0,
       &"[{k}] Placeholder for original value should be inserted at most once"
-    result[k] = copyV.join($PathSep)
+
+    let copyVStr = copyV.join($PathSep)
+    verifyEnvVar(k, copyVStr)
+    result[k] = copyVStr
 
 proc applyEnvVars*(envvars: StringTableRef) =
   for k, v in envvars:
