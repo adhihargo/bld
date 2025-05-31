@@ -4,6 +4,7 @@ import std/os
 import std/osproc
 import std/sequtils
 import std/strutils
+import std/strformat
 import std/sugar
 import std/tables
 
@@ -42,36 +43,66 @@ proc processExeArgs(exeArgList: seq[string]) =
     stderr.writeLine("> No recognized Blender binary in argument list, exiting.")
     quit(QuitFailure)
 
-proc processBlendArgs(blendArgList: seq[string], tblPaths: PathTable) =
+proc processCommandExec(
+  versionSpec: string, confData: ref ConfigData, filePath: string, passedArgs: string
+)
+
+proc processBlendArgs(
+    blendArgList: seq[string],
+    versionSpec: string,
+    confData: ref ConfigData,
+    passedArgs: string,
+) =
   if blendArgList.len == 0:
     return
 
   let
+    tblPaths = confData.paths
     fileVersionTable = getBlenderFileVersionTable(blendArgList, tblPaths)
-    verTripletPaths = tblPaths.pairs.toSeq.map(
-      proc(vPair: (string, string)): (VersionTriplet, string, string) =
-        let optVerTriplet = vPair[0].toVersionTriplet
+    verTripletOpts = tblPaths.keys.toSeq.map(
+      proc(key: string): (VersionTriplet, string) =
+        let optVerTriplet = key.toVersionTriplet
         let verTriplet =
           if optVerTriplet.isNone:
             [-1, -1, -1]
           else:
             optVerTriplet.get()
-        (verTriplet, vPair[0], vPair[1])
+        (verTriplet, key)
     )
   for filePath in blendArgList:
     let optFileVersion = fileVersionTable.getOrDefault(filePath)
     if optFileVersion.isNone:
+      # open with latest
       continue
-    for vTuple in verTripletPaths:
+    for vTuple in verTripletOpts:
       if vTuple[0] >= optFileVersion.get():
-        let
-          versionSpec = vTuple[1]
-          cmdBinPath = vTuple[2]
-          cmdStr = [cmdBinPath, filePath].quoteShellCommand
-        stderr.writeLine("> Command: ", cmdStr)
-        discard execCmd(cmdStr)
+        let versionSpec = vTuple[1]
+        processCommandExec(versionSpec, confData, filePath, passedArgs)
         break
 
+proc processCommandExec(
+    versionSpec: string, confData: ref ConfigData, filePath: string, passedArgs: string
+) =
+  var cmdStr = ""
+  try:
+    let
+      cmdBinPath = getCommandBinPath(versionSpec, confData.paths)
+      cmdSwitches = getCommandSwitches(versionSpec, confData.switches)
+      cmdEnvVars = getCommandEnvVars(versionSpec, confData.envs).finalizeEnvVars
+      filePath = if filePath == "": filePath else: filePath.quoteShell
+    applyEnvVars(cmdEnvVars)
+    cmdStr = [cmdBinPath, filePath, passedArgs, cmdSwitches]
+      .filter(
+        proc(c: string): bool =
+          c != ""
+      )
+      .join(" ")
+  except ConfigError as e: # catch finalizeEnvVars erros
+    stderr.writeLine(&"> Config error [v{versionSpec}]: ", e.msg)
+    quit(QuitFailure)
+
+  stderr.writeLine(&"> Command [v{versionSpec}]: ", $cmdStr)
+  discard execCmd(cmdStr)
   quit(QuitSuccess)
 
 proc runApp() =
@@ -108,11 +139,6 @@ proc runApp() =
     stderr.writeLine("> No available version specs, exiting")
     quit(QuitFailure)
 
-  # passed blend file arguments directly, call each with appropriate
-  # Blender version if available.
-  let blendArgList = getArgsBlendList(argData.filePathList)
-  processBlendArgs(blendArgList, confData.paths)
-
   let versionSpec = getVersionSpec(argData.versionSpec, confData.paths)
   if versionSpec == "":
     var versionOptsStr = join(versionOpts, ", ")
@@ -120,15 +146,13 @@ proc runApp() =
     stderr.writeLine("> Available version specs: ", versionOptsStr)
     quit(QuitFailure)
 
-  let
-    cmdBinPath = getCommandBinPath(versionSpec, confData.paths)
-    cmdSwitches = getCommandSwitches(versionSpec, confData.switches)
-    cmdEnvVars = getCommandEnvVars(versionSpec, confData.envs)
-  applyEnvVars(cmdEnvVars)
-
-  let cmdStr = [cmdBinPath, argData.passedArgs, cmdSwitches].join(" ")
-  stderr.writeLine("> Command: ", cmdStr)
-  discard execCmd(cmdStr)
+  # passed blend file arguments directly, call each with appropriate
+  # Blender version if available.
+  let blendArgList = getArgsBlendList(argData.filePathList)
+  if blendArgList.len > 0:
+    processBlendArgs(blendArgList, versionSpec, confData, argData.passedArgs)
+  else:
+    processCommandExec(versionSpec, confData, "", argData.passedArgs)
 
 when isMainModule:
   runApp()
