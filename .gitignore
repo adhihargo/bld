@@ -1,5 +1,7 @@
 ﻿*.exe
+*.pdf
 *.json
 *.yaml
+*.zip
 
 .task/

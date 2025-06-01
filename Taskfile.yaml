@@ -9,6 +9,8 @@ tasks:
     dir: '{{.TASKFILE_DIR}}'
     sources:
       - src/*.nim
+    generates:
+      - '{{.OUTPUT_PATH}}.exe'
     cmds:
       - nim compile {{.NIMC_ARGS_REL}} -o:{{.OUTPUT_PATH}} src/launch.nim {{.CLI_ARGS}} # 
       - task: pack
@@ -17,4 +19,55 @@ tasks:
     cmds:
       - strip {{.OUTPUT_PATH}}.exe
       - upx {{.OUTPUT_PATH}}.exe
+  doc:
+    dir: '{{.TASKFILE_DIR}}'
+    sources:
+      - doc/*.md
+    cmds:
+      - pandoc -f markdown -t context doc/manual.md -o manual.pdf
 
+  archive:
+    cmds:
+      - task: archive_bin
+      - task: archive_src
+  archive_bin:
+    dir: '{{.TASKFILE_DIR}}'
+    vars:
+      GIT_TAG:
+        sh: git describe
+      ARCHIVE_FILE: 'bld-{{.GIT_TAG}}-windows64.zip'
+    generates:
+      - ./'{{.ARCHIVE_FILE}}'
+    sources:
+      - bld.exe
+      - LICENSE
+      - README.md
+      - manual.pdf
+    cmds:
+      - task: build
+      - task: doc
+      - for: sources
+        cmd: 7z -y a -w. "{{.ARCHIVE_FILE}}" "{{.ITEM}}"
+  archive_src:
+    dir: '{{.TASKFILE_DIR}}'
+    vars:
+      GIT_TAG:
+        sh: git describe
+      ARCHIVE_FILE: 'bld-{{.GIT_TAG}}.zip'
+    generates:
+      - ./'{{.ARCHIVE_FILE}}'
+    sources:
+      - doc/*.md
+      - src/*.nim
+      - LICENSE
+      - README.md
+      - Taskfile.yaml
+    cmds:
+      - for: sources
+        cmd: 7z -y a -w. "{{.ARCHIVE_FILE}}" "{{.ITEM}}"
+
+  clean:
+    dir: '{{.TASKFILE_DIR}}'
+    cmds:
+      - rm -f src/*.exe
+      - rm -f *.py
