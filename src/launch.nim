@@ -117,7 +117,7 @@ proc runApp() =
     for v in versionOpts:
       stderr.writeLine("> -v:", v)
     quit(QuitSuccess)
-  elif argData.commandType == cmdRegister:
+  elif argData.commandType == cmdInstall:
     stderr.writeLine("> Registering self to handle .blend files")
     let binPath = getAppFilename()
     if registerExtHandler(binPath):

@@ -10,7 +10,7 @@ type
     cmdExec
     cmdList
     cmdPrintConf
-    cmdRegister
+    cmdInstall
 
   ArgumentsData* = object
     help: bool
@@ -27,12 +27,13 @@ onFailedAssert(msg):
 
 proc printHelp() =
   let binName = lastPathPart(getAppFilename())
-  echo &"{binName} FILE_ARG --v:VERSION_SPEC -c:CONFIG_PATH* FILE_ARG* - \n"
+  echo &"{binName} FILE_ARG* --v:VERSION_SPEC -c:CONFIG_PATH* FILE_ARG* - \n"
   echo """
-FILE_ARG*		Any number of file arguments. Ones
-			without .blend* extension assumed to
-			be executables and will be
-			registered into available executable
+Arguments:
+FILE_ARG		Any number of file arguments. File
+			paths without .blend* extension
+			assumed to be executables and will
+			be added into available executable
 			paths.
 -v:VERSION_SPEC		Specify version spec as listed as a
 			key in config file's 'paths' section.
@@ -45,8 +46,8 @@ FILE_ARG*		Any number of file arguments. Ones
 			ones prefixed with VERSION_SPEC.
 --print-conf		Print accumulated configuration
 			data.
---register		[WINDOWS] Register this executable
-			as default handler for .blend files.
+--install		[WND] Register this executable as
+			default handler for .blend files.
 -h/--help		Print help, then exit.
 -/--			First occurence ends command line
 			parsing. Remaining arguments will be
@@ -56,7 +57,7 @@ FILE_ARG*		Any number of file arguments. Ones
 
 proc parseArgsRaw(): ref ArgumentsData =
   var p = initOptParser(
-    shortNoVal = {'h', 'l'}, longNoVal = @["help", "list", "print-conf", "register", ""]
+    shortNoVal = {'h', 'l'}, longNoVal = @["help", "list", "print-conf", "install", ""]
   )
 
   result = (ref ArgumentsData)(commandType: cmdExec)
@@ -79,8 +80,8 @@ proc parseArgsRaw(): ref ArgumentsData =
       result.help = true
     elif p.key in ["print-conf"]:
       result.commandType = cmdPrintConf
-    elif p.key in ["register"]:
-      result.commandType = cmdRegister
+    elif p.key in ["install"]:
+      result.commandType = cmdInstall
     elif p.kind == cmdArgument:
       result.filePathList.add(p.key)
     else:
