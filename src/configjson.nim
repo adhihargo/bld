@@ -1,5 +1,6 @@
 import std/json
 import std/jsonutils
+import std/os
 import std/sequtils
 import std/streams
 import std/strutils
@@ -17,7 +18,7 @@ proc readConfigFileJSON(filePath: string): JsonNode =
   let jsonFile = newFileStream(filePath)
   doAssert jsonFile != nil, "Unable to open config file " & filePath
 
-  var jsConfig = newJNull()
+  var jsConfig = newJObject()
   try:
     jsConfig = parseJson(jsonFile)
   except JsonParsingError as e:
@@ -26,7 +27,7 @@ proc readConfigFileJSON(filePath: string): JsonNode =
   return jsConfig
 
 proc readConfigRawJSON*(jsConfig: JsonNode): ref ConfigData =
-  doAssert jsConfig.kind != JNull, "Invalid config JSON data"
+  doAssert jsConfig.kind == JObject, "Invalid config JSON data"
   doAssert jsConfig.isValidConfig, "Invalid config JSON schema"
 
   result = new(ConfigData)
@@ -89,14 +90,15 @@ proc writeConfigFileJSON(confPath: string, jsConfig: JsonNode) =
     jsonFile.close
   jsonFile.write(jsConfig.pretty)
 
-proc editConfigFileJSON*(
-    confPath: string, extraTblPaths: PathTable
-) =
-  let jsConfig = readConfigFileJSON(confPath)
+proc editConfigFileJSON*(confPath: string, extraTblPaths: PathTable) =
   stderr.writeLine("> Reading existing config file: " & confPath)
+  let jsConfig =
+    if confPath.fileExists:
+      readConfigFileJSON(confPath)
+    else:
+      newJObject()
   try:
-    doAssert jsConfig.kind == JObject
-    let jsPaths = jsConfig.fields.getOrDefault("paths", newJNull())
+    let jsPaths = jsConfig.fields.getOrDefault("paths", newJObject())
     var tblPaths = jsPaths.jsonTo(PathTable)
     for k, v in extraTblPaths:
       tblPaths[k] = v
@@ -111,10 +113,10 @@ when isMainModule:
   import std/paths
   import constants
 
+  let
+    extraTblPaths = {"A": "C01", "B": "B01"}.toOrderedTable
+    confPath = $expandTilde(Path("~") / Path(CONFIG_JSON_NAME))
   try:
-    let
-      extraTblPaths = {"A": "C01", "B": "B01"}.toOrderedTable
-      confPath = $expandTilde(Path("~") / Path(CONFIG_JSON_NAME))
     editConfigFileJSON(confPath, extraTblPaths)
   except ConfigError as e:
     stderr.writeLine("> Config error: " & e.msg)
@@ -122,7 +124,7 @@ when isMainModule:
 
   var confData: ref ConfigData
   try:
-    confData = readConfigJSON(CONFIG_JSON_NAME)
+    confData = readConfigJSON(confPath)
   except ConfigError as e:
     echo "> Config error: ", e.msg
     quit(QuitFailure)
