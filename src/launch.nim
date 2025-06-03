@@ -72,11 +72,14 @@ proc processBlendArgs(
   for filePath in blendArgList:
     let optFileVersion = fileVersionTable.getOrDefault(filePath)
     if optFileVersion.isNone:
-      # open with latest
-      continue
+      # unknown file version, open with latest available
+      processCommandExec("", confData, filePath, passedArgs)
+      break
     for vTuple in verTripletOpts:
-      if vTuple[0] >= optFileVersion.get():
+      let fileVersion = optFileVersion.get()
+      if vTuple[0] >= fileVersion:
         let versionSpec = vTuple[1]
+        stderr.writeLine("> File version: ", fileVersion)
         processCommandExec(versionSpec, confData, filePath, passedArgs)
         break
 
