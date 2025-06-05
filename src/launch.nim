@@ -60,14 +60,14 @@ proc processBlendArgs(
     tblPaths = confData.paths
     fileVersionTable = getBlenderFileVersionTable(blendArgList, tblPaths)
     verTripletOpts = tblPaths.keys.toSeq.map(
-      proc(key: string): (VersionTriplet, string) =
+      proc(key: string): (VersionTriplet, string, string) =
         let optVerTriplet = key.toVersionTriplet
         let verTriplet =
           if optVerTriplet.isNone:
             [-1, -1, -1]
           else:
             optVerTriplet.get()
-        (verTriplet, key)
+        (verTriplet, key, tblPaths[key])
     )
   for filePath in blendArgList:
     let optFileVersion = fileVersionTable.getOrDefault(filePath)
@@ -77,7 +77,7 @@ proc processBlendArgs(
       break
     for vTuple in verTripletOpts:
       let fileVersion = optFileVersion.get()
-      if vTuple[0] >= fileVersion:
+      if vTuple[0] >= fileVersion and vTuple[2].fileExists:
         let versionSpec = vTuple[1]
         stderr.writeLine("> File version: ", fileVersion)
         processCommandExec(versionSpec, confData, filePath, passedArgs)
