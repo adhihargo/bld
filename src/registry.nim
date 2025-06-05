@@ -1,6 +1,6 @@
 import std/registry
 import std/options
-import std/sequtils
+import std/os
 import std/strutils
 
 proc getRegistryValue(path, key: string, handle: HKEY): Option[string] =
@@ -23,7 +23,7 @@ proc setRegistryValue(path, key, val: string, handle: HKEY): bool =
   except OSError:
     result = false
 
-proc registerExtHandler*(binPath: string): bool =
+proc registerExtHandler*(binPath: string, passedArgs: string = ""): bool =
   let
     regExtPath = r"SOFTWARE\Classes\.blend"
     defaultExtHandlerName = "blendfile"
@@ -33,14 +33,8 @@ proc registerExtHandler*(binPath: string): bool =
     stderr.writeLine("> Unable to edit file extension registry path")
     return false
 
-  let regCmdvalue = [binPath, "%1"]
-    .map(
-      proc(x: string): string =
-        "\"" & x & "\""
-    )
-    .join(" ")
-
   let
+    regCmdvalue = [binPath.quoteShell, passedArgs, "\"%1\""].join(" ")
     regExtHandlerPath =
       [r"SOFTWARE\Classes", optExtHandlerName.get(), r"shell\open\command"].join("\\")
   return setRegistryValue(regExtHandlerPath, "", regCmdvalue, HKEY_CURRENT_USER)

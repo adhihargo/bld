@@ -48,6 +48,9 @@ FILE_ARG		Any number of file arguments. File
 			data.
 --install		[WND] Register this executable as
 			default handler for .blend files.
+			Arguments passed after -/-- will be
+			added in the resulting `bld`
+			command.
 -h/--help		Print help, then exit.
 -/--			First occurence ends command line
 			parsing. Remaining arguments will be
