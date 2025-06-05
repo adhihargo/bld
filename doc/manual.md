@@ -16,9 +16,9 @@ The intention is to write a tool that,
 1. Download and extract `bld`'s binary archive in any location. The next steps assume that location is included in `PATH` environment variable, otherwise run in a command shell or file manager window pointing to its directory.
 2. Register at least one Blender executable either by drag and drop to `bld` executable in file manager, or run `bld` in command shell with the executables' full path as arguments. An even faster way is to search for all `blender.exe` files in any file manager or tools like [voidtools' Everything](https://www.voidtools.com/), then drag them into `bld`.
    This will create `bld.json` in home directory (see [Configuration Files](#configfiles)).
-3. To register `bld` as default handler for `.blend` files, run this command in terminal or through Run dialog: 
+3. To install `bld` as default handler for `.blend` files, run this command in terminal or through Run dialog:
    ```shell
-   bld --register
+   bld --install
    ```
 4. Create a `bld.yaml` config file (see [Configuration Files](#configfiles) below) to set run options for each executables added.
 
@@ -82,8 +82,6 @@ JSON:
 }
 ```
 
-
-
 ### Version Spec
 
 Version spec is simply a string against which a version string specified by the user will be compared, with the longest match prioritized over shorter ones. For example, with YAML configuration:
@@ -136,16 +134,16 @@ Usage:
 bld FILE_ARG* --v:VERSION_SPEC -c:CONFIG_PATH* FILE_ARG* -
 ```
 
-| Argument/switch                 |      | Description                                                  |
-| ------------------------------- | ---- | ------------------------------------------------------------ |
-| `FILE_ARG` |      | Any number of file arguments. Ones without `.blend*` extension assumed to be executables and will be added into available executable paths. |
-| `-v:VERSION_SPEC` |      | Specify version spec as listed as a key in config file's `'paths'` section. |
-| `-c`/<br />`--conf=CONFIG_PATH` |      | Specify config file path, repeatable. This overrides default behavior of sequentially reading predefined config file paths. |
-| `-l`/`--list` |      | List all version specs registered for the launcher, or if `-v` is used, ones prefixed with `VERSION_SPEC`. |
-| `--print-conf` |      | Print accumulated configuration data. |
-| `--install` |      | **[WND]** Register this executable as default handler for `.blend` files. |
-| `-h`/`--help` |      | Print help, then exit. |
-| `-`/`--` |      | First occurence ends command line parsing. Remaining arguments will be passed to Blender process being called. |
+| Argument/switch                 | Description                                                  |
+| ------------------------------- | ------------------------------------------------------------ |
+| `FILE_ARG` | Any number of file arguments. Ones without `.blend*` extension assumed to be executables and will be added into available executable paths. |
+| `-v:VERSION_SPEC` | Specify version spec as listed as a key in config file's `'paths'` section. |
+| `-c`/<br />`--conf=CONFIG_PATH` | Specify config file path, repeatable. This overrides default behavior of sequentially reading predefined config file paths. |
+| `-l`/`--list` | List all version specs registered for the launcher, or if `-v` is used, ones prefixed with `VERSION_SPEC`. |
+| `--print-conf` | Print accumulated configuration data. |
+| `--install` | **[WND]** Register this executable as default handler for `.blend` files. Arguments passed after `-`/`--` will be added in the resulting `bld` command. |
+| `-h`/`--help` | Print help, then exit. |
+| `-`/`--` | First occurence ends command line parsing. Remaining arguments will be passed to Blender process being called. |
 
 ---
 title: bld - Reference Manual
