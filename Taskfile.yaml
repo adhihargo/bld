@@ -22,9 +22,11 @@ tasks:
   doc:
     dir: '{{.TASKFILE_DIR}}'
     sources:
-      - doc/*.md
+      - README.md
+    generates:
+      - README.pdf
     cmds:
-      - pandoc -f markdown -t context doc/manual.md -o manual.pdf
+      - pandoc -f markdown -t context README.md -o README.pdf
 
   archive:
     cmds:
@@ -41,8 +43,7 @@ tasks:
     sources:
       - bld.exe
       - LICENSE
-      - README.md
-      - manual.pdf
+      - README.pdf
     cmds:
       - task: build
       - task: doc
