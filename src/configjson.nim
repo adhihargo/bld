@@ -14,17 +14,20 @@ onFailedAssert(msg):
   submsg = msg.substr(max(0, msg.rfind("` ") + 2))
   raise (ref ConfigError)(msg: submsg)
 
-proc readConfigFileJSON(filePath: string): JsonNode =
-  let jsonFile = newFileStream(filePath)
-  doAssert jsonFile != nil, "Unable to open config file " & filePath
+proc readConfigFileJSON*(fileStream: Stream, filePath: string = ""): JsonNode =
+  doAssert fileStream != nil, "Unable to open config file " & filePath
 
   var jsConfig = newJObject()
   try:
-    jsConfig = parseJson(jsonFile)
+    jsConfig = parseJson(fileStream)
   except JsonParsingError as e:
     raise newException(ConfigError, "JSON read: " & e.msg)
 
   return jsConfig
+
+proc readConfigFileJSON*(filePath: string): JsonNode =
+  let jsonFile = newFileStream(filePath)
+  return readConfigFileJSON(jsonFile, filePath)
 
 proc readConfigRawJSON*(jsConfig: JsonNode): ref ConfigData =
   doAssert jsConfig.kind == JObject, "Invalid config JSON data"
