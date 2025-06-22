@@ -44,12 +44,12 @@ proc processExeArgs(exeArgList: seq[string]) =
     quit(QuitFailure)
 
 proc processCommandExec(
-  versionSpec: string, confData: ref ConfigData, filePath: string, passedArgs: string
+  versionSpec: VersionSpec, confData: ref ConfigData, filePath: string, passedArgs: string
 )
 
 proc processBlendArgs(
     blendArgList: seq[string],
-    versionSpec: string,
+    versionSpec: VersionSpec,
     confData: ref ConfigData,
     passedArgs: string,
 ) =
@@ -73,18 +73,19 @@ proc processBlendArgs(
     let optFileVersion = fileVersionTable.getOrDefault(filePath)
     if optFileVersion.isNone:
       # unknown file version, open with latest available
-      processCommandExec("", confData, filePath, passedArgs)
+      let versionSpec = getVersionSpec("", tblPaths)
+      processCommandExec(versionSpec, confData, filePath, passedArgs)
       break
     for vTuple in verTripletOpts:
       let fileVersion = optFileVersion.get()
       if vTuple[0] >= fileVersion and vTuple[2].fileExists:
-        let versionSpec = vTuple[1]
+        let versionSpec = getVersionSpec(vTuple[1], tblPaths)
         stderr.writeLine("> File version: ", fileVersion)
         processCommandExec(versionSpec, confData, filePath, passedArgs)
         break
 
 proc processCommandExec(
-    versionSpec: string, confData: ref ConfigData, filePath: string, passedArgs: string
+    versionSpec: VersionSpec, confData: ref ConfigData, filePath: string, passedArgs: string
 ) =
   var cmdStr = ""
   try:
@@ -143,7 +144,7 @@ proc runApp() =
     quit(QuitFailure)
 
   let versionSpec = getVersionSpec(argData.versionSpec, confData.paths)
-  if versionSpec == "":
+  if versionSpec == nil:
     var versionOptsStr = join(versionOpts, ", ")
     stderr.writeLine("> Invalid version spec: ", argData.versionSpec)
     stderr.writeLine("> Available version specs: ", versionOptsStr)

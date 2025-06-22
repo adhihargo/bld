@@ -7,6 +7,7 @@ import configjson
 import cmdtable
 
 let
+  binPath = r"C:\prog\blender-4.4.0-windows-x64\blender.exe"
   jsonDataStr =
     # Use real existing binary paths, any binary, just to register
     r"""{
@@ -40,20 +41,26 @@ let
   jsonData = parseJson(jsonDataStr)
   cfgData = readConfigRawJSON(jsonData)
 
-test "Get version spec":
-  let initVersionSpec = ""
-  check getVersionSpec(initVersionSpec, cfgData.paths) == "4.4.3"
+test "Get literal version spec":
+  let versionSpec = getVersionSpec("", cfgData.paths)
+  check versionSpec == VersionSpec(literal: "4.4.3")
+
+test "Get nonexistent version spec":
+  let versionSpec = getVersionSpec("999", cfgData.paths)
+  check versionSpec == nil
+
+test "Get binary path":
+  let versionSpec = getVersionSpec("", cfgData.paths)
+  check getCommandBinPath(versionSpec, cfgData.paths) == binPath
 
 test "Get command line switches":
   let
-    initVersionSpec = ""
-    versionSpec = getVersionSpec(initVersionSpec, cfgData.paths)
+    versionSpec = getVersionSpec("", cfgData.paths)
     cmdSwitches = getCommandSwitches(versionSpec, cfgData.switches)
   check cmdSwitches == "--switch4.4.3"
 
 test "Get command line environment variables":
   let
-    initVersionSpec = ""
-    versionSpec = getVersionSpec(initVersionSpec, cfgData.paths)
+    versionSpec = getVersionSpec("", cfgData.paths)
     cmdEnvVars = getCommandEnvVars(versionSpec, cfgData.envs)
   check "VAR4.4" in cmdEnvVars.keys.toSeq

@@ -5,6 +5,25 @@ import std/strutils
 import std/sugar
 import std/tables
 
+type VersionSpec* = ref object
+  literal*: string
+  matching*: string
+
+proc `$`*(versionSpec: VersionSpec): string =
+  if versionSpec == nil:
+    result = "nil"
+  else:
+    result = "VersionSpec(literal: "
+    result.addQuoted(versionSpec.literal)
+    result.add(", matching: ")
+    result.addQuoted(versionSpec.matching)
+    result.add(")")
+
+proc `==`*(a, b: VersionSpec): bool =
+  return
+    (a.isNil and b.isNil) or
+    (not (a.isNil or b.isNil) and a.literal == b.literal and a.matching == b.matching)
+
 proc getVersionTable*(
     versionSpec: string, tblPaths: OrderedTable, reverse: bool = false
 ): OrderedTable {.inline.} =
@@ -25,33 +44,34 @@ proc getVersionOpts*(
 
 proc getVersionSpec*(
     versionSpec: string, tblPaths: OrderedTable[string, string]
-): string =
+): VersionSpec =
   let
     ctxTblPaths: OrderedTable[string, string] = getVersionTable(versionSpec, tblPaths)
     tblPathsKeys = ctxTblPaths.keys.toSeq.sorted(order = SortOrder.Descending)
   for k in tblPathsKeys:
-    if fileExists(ctxTblPaths[k]):
-      return k
+    let kBinPath = ctxTblPaths[k]
+    if fileExists(kBinPath):
+      return VersionSpec(literal: k)
 
 proc getCommandBinPath*(
-    versionSpec: string, tblPaths: OrderedTable[string, string]
+    versionSpec: VersionSpec, tblPaths: OrderedTable[string, string]
 ): string =
-  return tblPaths.getOrDefault(versionSpec)
+  return tblPaths.getOrDefault(versionSpec.literal)
 
 proc getCommandSwitches*(
-    versionSpec: string, tblSwitches: OrderedTable[string, string]
+    versionSpec: VersionSpec, tblSwitches: OrderedTable[string, string]
 ): string =
   let
-    ctxTblSwitches = getVersionTable(versionSpec, tblSwitches, true)
+    ctxTblSwitches = getVersionTable(versionSpec.literal, tblSwitches, true)
     tblSwitchesKeys = ctxTblSwitches.keys.toSeq.sorted(order = SortOrder.Descending)
   for k in tblSwitchesKeys:
     return ctxTblSwitches[k]
 
 proc getCommandEnvVars*(
-    versionSpec: string, tblEnvVars: OrderedTable
+    versionSpec: VersionSpec, tblEnvVars: OrderedTable
 ): OrderedTable[string, seq[string]] {.inline.} =
   let
-    ctxTblEnvVars = getVersionTable(versionSpec, tblEnvVars, true)
+    ctxTblEnvVars = getVersionTable(versionSpec.literal, tblEnvVars, true)
     tblEnvVarsKeys = ctxTblEnvVars.keys.toSeq.sorted(order = SortOrder.Descending)
   for k in tblEnvVarsKeys:
     return ctxTblEnvVars[k]
