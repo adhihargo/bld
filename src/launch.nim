@@ -44,7 +44,10 @@ proc processExeArgs(exeArgList: seq[string]) =
     quit(QuitFailure)
 
 proc processCommandExec(
-  versionSpec: VersionSpec, confData: ref ConfigData, filePath: string, passedArgs: string
+  versionSpec: VersionSpec,
+  confData: ref ConfigData,
+  filePath: string,
+  passedArgs: string,
 )
 
 proc processBlendArgs(
@@ -85,8 +88,17 @@ proc processBlendArgs(
         break
 
 proc processCommandExec(
-    versionSpec: VersionSpec, confData: ref ConfigData, filePath: string, passedArgs: string
+    versionSpec: VersionSpec,
+    confData: ref ConfigData,
+    filePath: string,
+    passedArgs: string,
 ) =
+  let versionSpecStr =
+    if versionSpec.matching == "":
+      versionSpec.literal
+    else:
+      versionSpec.literal & "/" & versionSpec.matching
+
   var cmdStr = ""
   try:
     let
@@ -102,10 +114,10 @@ proc processCommandExec(
       )
       .join(" ")
   except ConfigError as e: # catch finalizeEnvVars erros
-    stderr.writeLine(&"> Config error [v{versionSpec}]: ", e.msg)
+    stderr.writeLine(&"> Config error [v{versionSpecStr}]: ", e.msg)
     quit(QuitFailure)
 
-  stderr.writeLine(&"> Command [v{versionSpec}]: ", $cmdStr)
+  stderr.writeLine(&"> Command [v{versionSpecStr}]: ", $cmdStr)
   discard execCmd(cmdStr)
   quit(QuitSuccess)
 
