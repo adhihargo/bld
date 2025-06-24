@@ -5,6 +5,8 @@ import std/strutils
 import std/sugar
 import std/tables
 
+import configdata
+
 type VersionSpec* = ref object
   literal*: string
   matching*: string
@@ -24,17 +26,23 @@ proc `==`*(a, b: VersionSpec): bool =
     (a.isNil and b.isNil) or
     (not (a.isNil or b.isNil) and a.literal == b.literal and a.matching == b.matching)
 
+proc versionValueFilter(v: EnvVarMapping): bool =
+  true
+
+proc versionValueFilter(v: string): bool =
+  fileExists(v)
+
 proc getVersionTable*(
     versionSpec: string, tblPaths: OrderedTable, reverse: bool = false
 ): OrderedTable {.inline.} =
-  return
-    if versionSpec == "":
-      tblPaths
-    else:
-      collect(initOrderedTable()):
-        for k, v in tblPaths.pairs:
-          if (reverse and versionSpec.startsWith(k)) or k.startsWith(versionSpec):
-            {k: v}
+  let emptyVersionSpec = versionSpec.strip() == ""
+  return collect(initOrderedTable()):
+    for k, v in tblPaths.pairs:
+      if (emptyVersionSpec and versionValueFilter(v)) or (
+        not emptyVersionSpec and
+        ((reverse and versionSpec.startsWith(k)) or k.startsWith(versionSpec))
+      ):
+        {k: v}
 
 proc getVersionOpts*(
     versionSpec: string, tblPaths: OrderedTable[string, string]
@@ -47,34 +55,56 @@ proc getVersionSpec*(
 ): VersionSpec =
   let
     ctxTblPaths: OrderedTable[string, string] = getVersionTable(versionSpec, tblPaths)
-    tblPathsKeys = ctxTblPaths.keys.toSeq.sorted(order = SortOrder.Descending)
-  for k in tblPathsKeys:
+    ctxTblPathsKeys = ctxTblPaths.keys.toSeq.sorted(order = SortOrder.Descending)
+  for k in ctxTblPathsKeys:
     let kBinPath = ctxTblPaths[k]
-    if fileExists(kBinPath):
+    if kBinPath in tblPaths.keys.toSeq and fileExists(tblPaths.getOrDefault(kBinPath)):
+      # version spec cross reference
+      return VersionSpec(literal: k, matching: kBinPath)
+    elif fileExists(kBinPath):
       return VersionSpec(literal: k)
 
 proc getCommandBinPath*(
     versionSpec: VersionSpec, tblPaths: OrderedTable[string, string]
 ): string =
-  return tblPaths.getOrDefault(versionSpec.literal)
+  let binPath = tblPaths.getOrDefault(versionSpec.matching)
+  return
+    if binPath != "":
+      binPath
+    else:
+      tblPaths.getOrDefault(versionSpec.literal)
 
 proc getCommandSwitches*(
-    versionSpec: VersionSpec, tblSwitches: OrderedTable[string, string]
+    versionSpec: VersionSpec, table: OrderedTable[string, string]
 ): string =
   let
-    ctxTblSwitches = getVersionTable(versionSpec.literal, tblSwitches, true)
-    tblSwitchesKeys = ctxTblSwitches.keys.toSeq.sorted(order = SortOrder.Descending)
-  for k in tblSwitchesKeys:
-    return ctxTblSwitches[k]
+    litTable = getVersionTable(versionSpec.literal, table, true)
+    litTableKeys = litTable.keys.toSeq.sorted(order = SortOrder.Descending)
+  for k in litTableKeys:
+    return litTable[k]
+
+  if versionSpec.matching != "":
+    let
+      matTable = getVersionTable(versionSpec.matching, table, true)
+      matTableKeys = matTable.keys.toSeq.sorted(order = SortOrder.Descending)
+    for k in matTableKeys:
+      return matTable[k]
 
 proc getCommandEnvVars*(
-    versionSpec: VersionSpec, tblEnvVars: OrderedTable
-): OrderedTable[string, seq[string]] {.inline.} =
+    versionSpec: VersionSpec, table: OrderedTable
+): EnvVarMapping {.inline.} =
   let
-    ctxTblEnvVars = getVersionTable(versionSpec.literal, tblEnvVars, true)
-    tblEnvVarsKeys = ctxTblEnvVars.keys.toSeq.sorted(order = SortOrder.Descending)
-  for k in tblEnvVarsKeys:
-    return ctxTblEnvVars[k]
+    litTable = getVersionTable(versionSpec.literal, table, true)
+    litTableKeys = litTable.keys.toSeq.sorted(order = SortOrder.Descending)
+  for k in litTableKeys:
+    return litTable[k]
+
+  if versionSpec.matching != "":
+    let
+      matTable = getVersionTable(versionSpec.matching, table, true)
+      matTableKeys = matTable.keys.toSeq.sorted(order = SortOrder.Descending)
+    for k in matTableKeys:
+      return matTable[k]
 
 when isMainModule:
   import config

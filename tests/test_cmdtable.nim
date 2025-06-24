@@ -22,6 +22,7 @@ let
     "4.3.3": "C:\\prog\\blender-4.4.0-windows-x64\\blender.exe",
     "4.4.0": "C:\\prog\\blender-4.4.0-windows-x64\\blender.exe",
     "4.4.3": "C:\\prog\\blender-4.4.0-windows-x64\\blender.exe",
+    "STORYBOARD": "4.4.3",
   },
   "switches": {
     "4": "--switch4",
@@ -42,6 +43,10 @@ let
   cfgData = readConfigRawJSON(jsonData)
 
 test "Get literal version spec":
+  let versionSpec = getVersionSpec("4.3", cfgData.paths)
+  check versionSpec == VersionSpec(literal: "4.3.3")
+
+test "Get latest version spec":
   let versionSpec = getVersionSpec("", cfgData.paths)
   check versionSpec == VersionSpec(literal: "4.4.3")
 
@@ -64,3 +69,47 @@ test "Get command line environment variables":
     versionSpec = getVersionSpec("", cfgData.paths)
     cmdEnvVars = getCommandEnvVars(versionSpec, cfgData.envs)
   check "VAR4.4" in cmdEnvVars.keys.toSeq
+
+test "Get cross-referencing version spec":
+  let versionSpec = getVersionSpec("S", cfgData.paths)
+  check versionSpec == VersionSpec(literal: "STORYBOARD", matching: "4.4.3")
+
+test "Get cross-referencing binary path":
+  let versionSpec = getVersionSpec("S", cfgData.paths)
+  check getCommandBinPath(versionSpec, cfgData.paths) == binPath
+
+test "Get cross-referencing command line switches":
+  let
+    jsonDataStr = r"""{
+  "paths": {
+    "4.4.0": "C:\\prog\\blender-4.4.0-windows-x64\\blender.exe",
+    "MODELING": "4.4.0"
+  },
+  "switches": {
+    "4.4.0": "--switch4.4.0",
+    "MOD": "--switchMOD",
+  }
+}"""
+    jsonData = parseJson(jsonDataStr)
+    cfgData = readConfigRawJSON(jsonData)
+    versionSpec = getVersionSpec("M", cfgData.paths)
+    cmdSwitches = getCommandSwitches(versionSpec, cfgData.switches)
+  check cmdSwitches == "--switchMOD"
+
+test "Get cross-referencing command line env variables":
+  let
+    jsonDataStr = r"""{
+  "paths": {
+    "4.4.0": "C:\\prog\\blender-4.4.0-windows-x64\\blender.exe",
+    "MODELING": "4.4.0"
+  },
+  "envs": {
+    "4": {"VAR4": ""},
+    "MOD": {"VARMOD": ""},
+  }
+}"""
+    jsonData = parseJson(jsonDataStr)
+    cfgData = readConfigRawJSON(jsonData)
+    versionSpec = getVersionSpec("MODEL", cfgData.paths)
+    cmdEnvVars = getCommandEnvVars(versionSpec, cfgData.envs)
+  check "VARMOD" in cmdEnvVars.keys.toSeq
