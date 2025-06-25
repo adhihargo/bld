@@ -4,6 +4,7 @@ import std/strtabs
 import std/strutils
 import std/tables
 
+import configdata
 import constants
 import errors
 import scriptdir
@@ -26,9 +27,7 @@ proc verifyEnvVar(key: string, value: string) {.inline.} =
     if not verifyResult:
       stderr.writeLine("> Warning: ", key, " path may not be usable: ", value)
 
-proc finalizeEnvVars*(
-    envvars: OrderedTable[string, seq[string]]
-): owned(StringTableRef) =
+proc finalizeEnvVars*(envvars: EnvVarMapping): owned(StringTableRef) =
   result = newStringTable(modeCaseInsensitive)
   for k, v in envvars:
     var copyV = v

@@ -68,7 +68,7 @@ proc readConfigRawJSON*(jsConfig: JsonNode): ref ConfigData =
         ), "Environment variable values must be a string or a list of strings"
 
     for verSpec, envJSONDict in jsEnvs.fields.pairs: # VERSION -> ENVTABLE
-      var envTable: OrderedTable[string, seq[string]]
+      var envTable: EnvVarMapping
       for envK, envV in envJSONDict.fields.pairs: # ENVVAR -> VALUELIST
         case envV.kind
         of JArray:

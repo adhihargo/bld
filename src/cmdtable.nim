@@ -44,15 +44,11 @@ proc getVersionTable*(
       ):
         {k: v}
 
-proc getVersionOpts*(
-    versionSpec: string, tblPaths: OrderedTable[string, string]
-): seq[string] =
-  let ctxTblPaths: OrderedTable[string, string] = getVersionTable(versionSpec, tblPaths)
+proc getVersionOpts*(versionSpec: string, tblPaths: PathTable): seq[string] =
+  let ctxTblPaths: PathTable = getVersionTable(versionSpec, tblPaths)
   return ctxTblPaths.keys.toSeq
 
-proc getVersionSpec*(
-    versionSpec: string, tblPaths: OrderedTable[string, string]
-): VersionSpec =
+proc getVersionSpec*(versionSpec: string, tblPaths: PathTable): VersionSpec =
   let
     ctxTblPaths: OrderedTable[string, string] = getVersionTable(versionSpec, tblPaths)
     ctxTblPathsKeys = ctxTblPaths.keys.toSeq.sorted(order = SortOrder.Descending)
@@ -64,9 +60,7 @@ proc getVersionSpec*(
     elif fileExists(kBinPath):
       return VersionSpec(literal: k)
 
-proc getCommandBinPath*(
-    versionSpec: VersionSpec, tblPaths: OrderedTable[string, string]
-): string =
+proc getCommandBinPath*(versionSpec: VersionSpec, tblPaths: PathTable): string =
   let binPath = tblPaths.getOrDefault(versionSpec.matching)
   return
     if binPath != "":
@@ -74,9 +68,7 @@ proc getCommandBinPath*(
     else:
       tblPaths.getOrDefault(versionSpec.literal)
 
-proc getCommandSwitches*(
-    versionSpec: VersionSpec, table: OrderedTable[string, string]
-): string =
+proc getCommandSwitches*(versionSpec: VersionSpec, table: PathTable): string =
   let
     litTable = getVersionTable(versionSpec.literal, table, true)
     litTableKeys = litTable.keys.toSeq.sorted(order = SortOrder.Descending)
