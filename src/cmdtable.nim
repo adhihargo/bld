@@ -26,19 +26,13 @@ proc `==`*(a, b: VersionSpec): bool =
     (a.isNil and b.isNil) or
     (not (a.isNil or b.isNil) and a.literal == b.literal and a.matching == b.matching)
 
-proc versionValueFilter(v: EnvVarMapping): bool =
-  true
-
-proc versionValueFilter(v: string): bool =
-  fileExists(v)
-
 proc getVersionTable*(
     versionSpec: string, tblPaths: OrderedTable, reverse: bool = false
 ): OrderedTable {.inline.} =
   let emptyVersionSpec = versionSpec.strip() == ""
   return collect(initOrderedTable()):
     for k, v in tblPaths.pairs:
-      if (emptyVersionSpec and versionValueFilter(v)) or (
+      if emptyVersionSpec or (
         not emptyVersionSpec and
         ((reverse and versionSpec.startsWith(k)) or k.startsWith(versionSpec))
       ):
@@ -50,15 +44,17 @@ proc getVersionOpts*(versionSpec: string, tblPaths: PathTable): seq[string] =
 
 proc getVersionSpec*(versionSpec: string, tblPaths: PathTable): VersionSpec =
   let
-    ctxTblPaths: OrderedTable[string, string] = getVersionTable(versionSpec, tblPaths)
-    ctxTblPathsKeys = ctxTblPaths.keys.toSeq.sorted(order = SortOrder.Descending)
-  for k in ctxTblPathsKeys:
-    let kBinPath = ctxTblPaths[k]
-    if kBinPath in tblPaths.keys.toSeq and fileExists(tblPaths.getOrDefault(kBinPath)):
-      # version spec cross reference
-      return VersionSpec(literal: k, matching: kBinPath)
-    elif fileExists(kBinPath):
+    litTable = getVersionTable(versionSpec, tblPaths)
+    litTableKeys = litTable.keys.toSeq.sorted(order = SortOrder.Descending)
+  for k in litTableKeys:
+    let v = litTable[k]
+    if fileExists(v):
       return VersionSpec(literal: k)
+    elif versionSpec != "":
+      # version spec cross reference
+      let versionSpec2 = getVersionSpec(v, tblPaths)
+      if versionSpec2 != nil and fileExists(tblPaths[versionSpec2.literal]):
+        return VersionSpec(literal: k, matching: versionSpec2.literal)
 
 proc getCommandBinPath*(versionSpec: VersionSpec, tblPaths: PathTable): string =
   let binPath = tblPaths.getOrDefault(versionSpec.matching)

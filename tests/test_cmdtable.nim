@@ -22,6 +22,7 @@ let
     "4.3.3": "C:\\prog\\blender-4.4.0-windows-x64\\blender.exe",
     "4.4.0": "C:\\prog\\blender-4.4.0-windows-x64\\blender.exe",
     "4.4.3": "C:\\prog\\blender-4.4.0-windows-x64\\blender.exe",
+    "4.4.4": "Nonexistent path, must be ignored",
     "STORYBOARD": "4.4.3",
   },
   "switches": {
@@ -73,6 +74,32 @@ test "Get command line environment variables":
 test "Get cross-referencing version spec":
   let versionSpec = getVersionSpec("S", cfgData.paths)
   check versionSpec == VersionSpec(literal: "STORYBOARD", matching: "4.4.3")
+
+test "Get cross-referencing version spec - empty":
+  let
+    jsonDataStr = r"""{
+  "paths": {
+    "4.4.0": "C:\\prog\\blender-4.4.0-windows-x64\\blender.exe",
+    "MODELING": ""
+  }
+}"""
+    jsonData = parseJson(jsonDataStr)
+    cfgData = readConfigRawJSON(jsonData)
+    versionSpec = getVersionSpec("M", cfgData.paths)
+  check versionSpec == VersionSpec(literal: "MODELING", matching: "4.4.0")
+
+test "Get cross-referencing version spec - incomplete":
+  let
+    jsonDataStr = r"""{
+  "paths": {
+    "4.4.0": "C:\\prog\\blender-4.4.0-windows-x64\\blender.exe",
+    "MODELING": "4"
+  }
+}"""
+    jsonData = parseJson(jsonDataStr)
+    cfgData = readConfigRawJSON(jsonData)
+    versionSpec = getVersionSpec("M", cfgData.paths)
+  check versionSpec == VersionSpec(literal: "MODELING", matching: "4.4.0")
 
 test "Get cross-referencing binary path":
   let versionSpec = getVersionSpec("S", cfgData.paths)
