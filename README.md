@@ -116,9 +116,28 @@ switches:
 
 For any other Blender v4.\*.\* release, either is expressly specified or is the latest available, `bld` will launch its executable with an interactive Python console. 
 
+### Cross-Reference
+
+In `paths` section, a version spec can refer to other version spec, instead of executable path. If a matching spec is found, other sections will searched in, first based on the literal spec then the matching spec. For example, with this config:
+
+```yaml
+{
+  "paths": {
+    "4.4.0": "C:\\prog\\blender-4.4.0-windows-x64\\blender.exe",
+    "MODELING": "4.4.0"
+  },
+  "switches": {
+    "4.4.0": "--switch4.4.0",
+    "MOD": "--switchMOD",
+  }
+}
+```
+
+… running `bld -vM` will run Blender v4.4.0 with `--switchMOD` argument (`MOD` is the longest substring of the literal cross-referencing version spec). Without the `MOD` entry in `switches` dictionary, `bld` will select based on matching spec and use `--switch4.4.0` as command argument.
+
 ## Environment Variables
 
-The value of every entries in `envs` table under each version specs can be a string, or a list of strings. This is to accomodate environment variables containing multiple paths joined with platform-specific path separator (e.g. variable `PATH` with value `C:\A;C:\B` adds both directories `C:\A` and `C:\B` into binary search path).
+The value of every entries in `envs` dictionary under each version specs can be a string, or a list of strings. This is to accomodate environment variables containing multiple paths joined with platform-specific path separator (e.g. variable `PATH` with value `C:\A;C:\B` adds both directories `C:\A` and `C:\B` into binary search path).
 
 A placeholder for original value of the variable, "`*`", can be added in the list *at most once*, and the variable's original value will be inserted in its place. For example, if variable `PYTHONPATH` has an original value of `C:\A;C:\B`, the configuration:
 
