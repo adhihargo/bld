@@ -2,7 +2,7 @@ version: '3'
 
 vars:
   OUTPUT_PATH: bld
-  NIMC_ARGS_REL: --verbosity:0 --debuginfo:off -d:release
+  NIMC_ARGS_REL: --verbosity:0 --debuginfo:off -d:release --opt:size
 
 tasks:
   build:
@@ -27,6 +27,12 @@ tasks:
       - README.pdf
     cmds:
       - pandoc -f markdown -t context README.md -o README.pdf
+  test-*:
+    dir: '{{.TASKFILE_DIR}}/tests'
+    vars:
+      BASENAME: '{{index .MATCH 0}}'
+    cmds:
+      - arelo -t ../src/{{.BASENAME}}.nim -t test_{{.BASENAME}}.nim -- nim r test_{{.BASENAME}}
 
   archive:
     cmds:
@@ -70,5 +76,7 @@ tasks:
   clean:
     dir: '{{.TASKFILE_DIR}}'
     cmds:
+      - rm -rf .task
       - rm -f src/*.exe
+      - rm -f tests/*.exe
       - rm -f *.py
