@@ -61,6 +61,7 @@ proc processBlendArgs(
 
   let
     tblPaths = confData.paths
+    latestVersionSpec = getVersionSpec("", tblPaths)
     fileVersionTable = getBlenderFileVersionTable(blendArgList, tblPaths)
     verTripletOpts = tblPaths.keys.toSeq.map(
       proc(key: string): (VersionTriplet, string, string) =
@@ -76,8 +77,7 @@ proc processBlendArgs(
     let optFileVersion = fileVersionTable.getOrDefault(filePath)
     if optFileVersion.isNone:
       # unknown file version, open with latest available
-      let versionSpec = getVersionSpec("", tblPaths)
-      processCommandExec(versionSpec, confData, filePath, passedArgs)
+      processCommandExec(latestVersionSpec, confData, filePath, passedArgs)
       break
     for vTuple in verTripletOpts:
       let fileVersion = optFileVersion.get()
@@ -86,6 +86,10 @@ proc processBlendArgs(
         stderr.writeLine("> File version: ", fileVersion)
         processCommandExec(versionSpec, confData, filePath, passedArgs)
         break
+    # fallthrough (file made with version newer than any available), open with latest
+    processCommandExec(latestVersionSpec, confData, filePath, passedArgs)
+    break
+    
 
 proc processCommandExec(
     versionSpec: VersionSpec,
