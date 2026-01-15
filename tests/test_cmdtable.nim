@@ -7,21 +7,21 @@ import configjson
 import cmdtable
 
 let
-  binPath = r"C:\prog\blender-4.4.0-windows-x64\blender.exe"
+  binPath = r"C:\prog\blender-2.93.18-windows-x64\blender.exe"
   jsonDataStr =
     # Use real existing binary paths, any binary, just to register
     r"""{
   "paths": {
     "2.1": null,
     "2.93": "C:\\prog\\blender-2.93.18-windows-x64\\blender.exe",
-    "3.6.16": "C:\\prog\\blender-3.6.16-windows-x64\\blender.exe",
-    "4.2.9": "C:\\prog\\blender-4.4.0-windows-x64\\blender.exe",
-    "4.3.0": "C:\\prog\\blender-4.4.0-windows-x64\\blender.exe",
-    "4.3.1": "C:\\prog\\blender-4.4.0-windows-x64\\blender.exe",
-    "4.3.2": "C:\\prog\\blender-4.4.0-windows-x64\\blender.exe",
-    "4.3.3": "C:\\prog\\blender-4.4.0-windows-x64\\blender.exe",
-    "4.4.0": "C:\\prog\\blender-4.4.0-windows-x64\\blender.exe",
-    "4.4.3": "C:\\prog\\blender-4.4.0-windows-x64\\blender.exe",
+    "3.6.16": "C:\\prog\\blender-2.93.18-windows-x64\\blender.exe",
+    "4.2.9": "C:\\prog\\blender-2.93.18-windows-x64\\blender.exe",
+    "4.3.0": "C:\\prog\\blender-2.93.18-windows-x64\\blender.exe",
+    "4.3.1": "C:\\prog\\blender-2.93.18-windows-x64\\blender.exe",
+    "4.3.2": "C:\\prog\\blender-2.93.18-windows-x64\\blender.exe",
+    "4.3.3": "C:\\prog\\blender-2.93.18-windows-x64\\blender.exe",
+    "4.4.0": "C:\\prog\\blender-2.93.18-windows-x64\\blender.exe",
+    "4.4.3": "C:\\prog\\blender-2.93.18-windows-x64\\blender.exe",
     "4.4.4": "Nonexistent path, must be ignored",
     "STORYBOARD": "4.4.3",
   },
@@ -79,7 +79,7 @@ test "Get cross-referencing version spec - empty":
   let
     jsonDataStr = r"""{
   "paths": {
-    "4.4.0": "C:\\prog\\blender-4.4.0-windows-x64\\blender.exe",
+    "4.4.0": "C:\\prog\\blender-2.93.18-windows-x64\\blender.exe",
     "MODELING": ""
   }
 }"""
@@ -92,7 +92,7 @@ test "Get cross-referencing version spec - incomplete":
   let
     jsonDataStr = r"""{
   "paths": {
-    "4.4.0": "C:\\prog\\blender-4.4.0-windows-x64\\blender.exe",
+    "4.4.0": "C:\\prog\\blender-2.93.18-windows-x64\\blender.exe",
     "MODELING": "4"
   }
 }"""
@@ -109,7 +109,7 @@ test "Get cross-referencing command line switches":
   let
     jsonDataStr = r"""{
   "paths": {
-    "4.4.0": "C:\\prog\\blender-4.4.0-windows-x64\\blender.exe",
+    "4.4.0": "C:\\prog\\blender-2.93.18-windows-x64\\blender.exe",
     "MODELING": "4.4.0"
   },
   "switches": {
@@ -127,7 +127,7 @@ test "Get cross-referencing command line env variables":
   let
     jsonDataStr = r"""{
   "paths": {
-    "4.4.0": "C:\\prog\\blender-4.4.0-windows-x64\\blender.exe",
+    "4.4.0": "C:\\prog\\blender-2.93.18-windows-x64\\blender.exe",
     "MODELING": "4.4.0"
   },
   "envs": {
