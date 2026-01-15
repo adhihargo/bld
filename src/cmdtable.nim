@@ -99,7 +99,7 @@ when isMainModule:
   import configdata
 
   let
-    confData = readConfig()
+    confData = readConfigFiles()
     versionSpec =
       if paramCount() > 0:
         paramStr(1)

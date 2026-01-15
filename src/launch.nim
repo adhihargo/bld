@@ -124,7 +124,7 @@ proc processCommandExec(
 proc runApp() =
   let
     argData = getArgData()
-    confData = readConfig(argData.configPathList)
+    confData = readConfigFiles(argData.configPathList)
     versionOpts = getVersionOpts(argData.versionSpec, confData.paths)
   confData.sort()
 

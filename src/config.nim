@@ -21,7 +21,7 @@ proc editConfigFile*(extraTblPaths: PathTable) =
   let confPath = $expandTilde(Path("~") / Path(CONFIG_JSON_NAME))
   editConfigFileJSON(confPath, extraTblPaths)
 
-proc readConfig*(userConfPathList: seq[string] = @[]): ref ConfigData =
+proc readConfigFiles*(userConfPathList: seq[string] = @[]): ref ConfigData =
   let
     confJsonName = Path(CONFIG_JSON_NAME)
     confYamlName = Path(CONFIG_YAML_NAME)
@@ -62,5 +62,5 @@ proc readConfig*(userConfPathList: seq[string] = @[]): ref ConfigData =
       result.envs[k] = v
 
 when isMainModule:
-  let confData = readConfig()
+  let confData = readConfigFiles()
   echo "confData: ", confData

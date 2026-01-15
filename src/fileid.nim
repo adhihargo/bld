@@ -144,7 +144,7 @@ when isMainModule:
   echo ""
 
   import config
-  let confData = readConfig()
+  let confData = readConfigFiles()
   if confData == nil:
     quit(QuitFailure)
 
