@@ -57,6 +57,8 @@ proc getVersionSpec*(versionSpec: string, tblPaths: PathTable): VersionSpec =
         return VersionSpec(literal: k, matching: versionSpec2.literal)
 
 proc getCommandBinPath*(versionSpec: VersionSpec, tblPaths: PathTable): string =
+  doAssert versionSpec != nil, "Version spec must be provided"
+
   let binPath = tblPaths.getOrDefault(versionSpec.matching)
   return
     if binPath != "":
@@ -65,6 +67,8 @@ proc getCommandBinPath*(versionSpec: VersionSpec, tblPaths: PathTable): string =
       tblPaths.getOrDefault(versionSpec.literal)
 
 proc getCommandSwitches*(versionSpec: VersionSpec, table: PathTable): string =
+  doAssert versionSpec != nil, "Version spec must be provided"
+
   let
     litTable = getVersionTable(versionSpec.literal, table, true)
     litTableKeys = litTable.keys.toSeq.sorted(order = SortOrder.Descending)
@@ -81,6 +85,8 @@ proc getCommandSwitches*(versionSpec: VersionSpec, table: PathTable): string =
 proc getCommandEnvVars*(
     versionSpec: VersionSpec, table: OrderedTable
 ): EnvVarMapping {.inline.} =
+  doAssert versionSpec != nil, "Version spec must be provided"
+
   let
     litTable = getVersionTable(versionSpec.literal, table, true)
     litTableKeys = litTable.keys.toSeq.sorted(order = SortOrder.Descending)
