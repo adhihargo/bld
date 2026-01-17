@@ -93,13 +93,16 @@ proc writeConfigFileJSON(confPath: string, jsConfig: JsonNode) =
     jsonFile.close
   jsonFile.write(jsConfig.pretty)
 
-proc editConfigFileJSON*(confPath: string, extraTblPaths: PathTable) =
+proc getConfigDataJSON(confPath: string): JsonNode =
   stderr.writeLine("> Reading existing config file: " & confPath)
-  let jsConfig =
+  return
     if confPath.fileExists:
       readConfigFileJSON(confPath)
     else:
       newJObject()
+
+proc appendConfigPathsJSON*(confPath: string, extraTblPaths: PathTable) =
+  let jsConfig = getConfigDataJSON(confPath)
   try:
     let jsPaths = jsConfig.fields.getOrDefault("paths", newJObject())
     var tblPaths = jsPaths.jsonTo(PathTable)
@@ -120,7 +123,7 @@ when isMainModule:
     extraTblPaths = {"A": "C01", "B": "B01"}.toOrderedTable
     confPath = $expandTilde(Path("~") / Path(CONFIG_JSON_NAME))
   try:
-    editConfigFileJSON(confPath, extraTblPaths)
+    appendConfigPathsJSON(confPath, extraTblPaths)
   except ConfigError as e:
     stderr.writeLine("> Config error: " & e.msg)
     quit(QuitFailure)

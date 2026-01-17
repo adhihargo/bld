@@ -24,7 +24,7 @@ proc getArgData(): ref ArgumentsData =
     stderr.writeLine("> Command line error: ", e.msg)
     quit(QuitFailure)
 
-proc processExeArgs(exeArgList: seq[string]) =
+proc processExePaths(exeArgList: seq[string]) =
   if exeArgList.len == 0:
     return
 
@@ -37,7 +37,7 @@ proc processExeArgs(exeArgList: seq[string]) =
     stderr.writeLine("> Registering Blender versions: ")
     for v in exeTable.keys:
       stderr.writeLine("> -v:", v)
-    editConfigFile(exeTable)
+    appendConfigPaths(exeTable)
     quit(QuitSuccess)
   else:
     stderr.writeLine("> No recognized Blender binary in argument list, exiting.")
@@ -153,7 +153,7 @@ proc runApp() =
 
   # check and register executables passed as arguments.
   let exeArgList = getArgsExeList(argData.filePathList)
-  processExeArgs(exeArgList)
+  processExePaths(exeArgList)
 
   if versionOpts.len == 0:
     stderr.writeLine("> No available version specs, exiting")
