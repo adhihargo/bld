@@ -35,8 +35,9 @@ FILE_ARG		Any number of file arguments. File
 			assumed to be executables and will
 			be added into available executable
 			paths.
--v:VERSION_SPEC		Specify version spec as listed as a
-			key in config file's 'paths' section.
+-v:VERSION_SPEC/	Specify version spec as listed as a
+ -VERSION_SPEC		key in config file's 'paths'
+			section.
 -c/--conf=CONFIG_PATH	Specify config file path,
 			repeatable. This overrides default
 			behavior of sequentially reading
@@ -87,6 +88,9 @@ proc parseArgsRaw(): ref ArgumentsData =
       result.commandType = cmdInstall
     elif p.kind == cmdArgument:
       result.filePathList.add(p.key)
+    elif p.kind == cmdShortOption:
+      # Treat unrecognized short flag as version spec
+      result.versionSpec = p.key & p.val
     else:
       raise newException(CommandLineError, "Unrecognized flag: " & p.key)
 
