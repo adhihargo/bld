@@ -110,7 +110,7 @@ proc getBlenderFileVersionTable*(
     resultSeq.add((versionPairRaw[1], some(versionInts)))
   return resultSeq.toOrderedTable
 
-proc getBlenderExeVersion*(filePath: string): string =
+proc getBlenderExeVersion(filePath: string): string =
   if not fileExists(filePath):
     return
 
@@ -125,6 +125,14 @@ proc getBlenderExeVersion*(filePath: string): string =
   var versionMatch = execResult.output.find(EXE_VERSION_RE)
   if versionMatch.isSome:
     result = versionMatch.get.captures[0]
+
+proc getBlenderExeVersionTable*(fileList: seq[string]): OrderedTable[string, string] =
+  let exeTable = collect(initOrderedTable):
+    for exePath in fileList:
+      let exeVersion = getBlenderExeVersion(exePath)
+      if exeVersion != "":
+        {exeVersion: exePath}
+  return exeTable  
 
 when isMainModule:
   let

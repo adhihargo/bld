@@ -24,20 +24,25 @@ proc getArgData(): ref ArgumentsData =
     stderr.writeLine("> Command line error: ", e.msg)
     quit(QuitFailure)
 
+proc printExeVersions(exeTable: PathTable) =
+  stderr.writeLine("> Registering Blender versions: ")
+  for v in exeTable.keys:
+    stderr.writeLine("> -v:", v)
+
+proc appendExePaths(exeArgList: seq[string]): bool =
+  let exeTable = getBlenderExeVersionTable(exeArgList)
+  if exeTable.len == 0:
+    return false
+
+  printExeVersions(exeTable)
+  appendConfigPaths(exeTable)
+  return true
+
 proc processExePaths(exeArgList: seq[string]) =
   if exeArgList.len == 0:
     return
 
-  let exeTable = collect(initOrderedTable):
-    for exePath in exeArgList:
-      let exeVersion = getBlenderExeVersion(exePath)
-      if exeVersion != "":
-        {exeVersion: exePath}
-  if exeTable.len > 0:
-    stderr.writeLine("> Registering Blender versions: ")
-    for v in exeTable.keys:
-      stderr.writeLine("> -v:", v)
-    appendConfigPaths(exeTable)
+  if appendExePaths(exeArgList):
     quit(QuitSuccess)
   else:
     stderr.writeLine("> No recognized Blender binary in argument list, exiting.")
@@ -89,7 +94,6 @@ proc processBlendArgs(
     # fallthrough (file made with version newer than any available), open with latest
     processCommandExec(latestVersionSpec, confData, filePath, passedArgs)
     break
-    
 
 proc processCommandExec(
     versionSpec: VersionSpec,
