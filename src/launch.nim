@@ -2,6 +2,7 @@ import std/algorithm
 import std/options
 import std/os
 import std/osproc
+import std/paths
 import std/sequtils
 import std/strutils
 import std/strformat
@@ -12,6 +13,7 @@ import args
 import cmdtable
 import config
 import configdata
+import constants
 import envvars
 import errors
 import fileid
@@ -28,6 +30,24 @@ proc printExeVersions(exeTable: PathTable) =
   stderr.writeLine("> Registering Blender versions: ")
   for v in exeTable.keys:
     stderr.writeLine("> -v:", v)
+
+proc updateExePaths*() =
+  let
+    confPath = $expandTilde(Path("~") / Path(CONFIG_JSON_NAME))
+    confData = readConfigFile(confPath)
+    pathRoots = getBinaryPathRoots(confData)
+    existingBinaryPaths = confData.paths.values.toSeq
+    binaryPaths = getBinaryPaths(pathRoots)
+    newBinaryPaths = binaryPaths.filter(
+      proc(fp: string): bool =
+        fp notin existingBinaryPaths
+    )
+    newBinaryTable = getBlenderExeVersionTable(newBinaryPaths)
+  if newBinaryTable.len == 0:
+    return
+
+  printExeVersions(newBinaryTable)
+  appendConfigPaths(newBinaryTable)
 
 proc appendExePaths(exeArgList: seq[string]): bool =
   let exeTable = getBlenderExeVersionTable(exeArgList)
@@ -136,7 +156,11 @@ proc runApp() =
     versionOpts = getVersionOpts(argData.versionSpec, confData.paths)
   confData.sort()
 
-  if argData.commandType == cmtList:
+  if argData.commandType == cmtUpdatePaths:
+    stderr.writeLine("> Updating Blender versions list")
+    updateExePaths()
+    quit(QuitSuccess)
+  elif argData.commandType == cmtList:
     stderr.writeLine("> Blender versions registered:")
     for v in versionOpts:
       stderr.writeLine("> -v:", v)

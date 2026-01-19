@@ -39,6 +39,7 @@ FILE_ARG		Any number of file arguments. File
 -v:VERSION_SPEC/	Specify version spec as listed as a
  -VERSION_SPEC		key in config file's 'paths'
 			section.
+-u/--update
 -c/--conf=CONFIG_PATH	Specify config file path,
 			repeatable. This overrides default
 			behavior of sequentially reading
@@ -62,7 +63,8 @@ FILE_ARG		Any number of file arguments. File
 
 proc parseArgsRaw(): ref ArgumentsData =
   var p = initOptParser(
-    shortNoVal = {'h', 'l'}, longNoVal = @["help", "list", "print-conf", "install", ""]
+    shortNoVal = {'u', 'l', 'h'},
+    longNoVal = @["update", "list", "help", "print-conf", "install", ""],
   )
 
   result = (ref ArgumentsData)(commandType: cmtExec)
@@ -79,6 +81,8 @@ proc parseArgsRaw(): ref ArgumentsData =
     elif p.key in ["c", "conf"]:
       doAssert p.val != "", "-c/--conf needs filepath argument"
       result.configPathList.add(p.val)
+    elif p.key in ["u", "update"]:
+      result.commandType = cmtUpdatePaths
     elif p.key in ["l", "list"]:
       result.commandType = cmtList
     elif p.key in ["h", "help"]:

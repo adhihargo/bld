@@ -4,6 +4,7 @@ import std/paths
 import std/sequtils
 import std/sets
 import std/tables
+import std/unicode
 
 import constants
 import configdata
@@ -11,7 +12,7 @@ import configjson
 import configyaml
 import errors
 
-proc readConfigFile(cfgPath: string): ref ConfigData =
+proc readConfigFile*(cfgPath: string): ref ConfigData =
   stderr.writeLine("> Reading existing config file: " & cfgPath)
   if splitFile(Path(cfgPath)).ext == ".json":
     return readConfigJSON(cfgPath)
@@ -61,6 +62,33 @@ proc readConfigFiles*(userConfPathList: seq[string] = @[]): ref ConfigData =
       result.switches[k] = v
     for k, v in fileConfData.envs.pairs:
       result.envs[k] = v
+
+proc getBinaryPathRoots*(confData: ref ConfigData): seq[string] =
+  let tblPaths = confData.paths
+  var rootPathSet: OrderedSet[string]
+  for binPath in tblPaths.values:
+    # paths assumed to be absolute, referring to a file that may no
+    # longer exist.
+    let rootDir = binPath.parentDir.parentDir
+    if rootDir.dirExists:
+      rootPathSet.incl(rootDir)
+  return rootPathSet.toSeq
+
+proc scanSubDirs(rootPath: string): seq[string] =
+  for pathKind, dirPath in walkDir(rootPath):
+    if pathKind != pcDir:
+      continue
+    for pathKind, fileName in walkDir(dirPath, relative = true):
+      if pathKind != pcFile or fileName.toLower != "blender.exe":
+        continue
+      let filePath = dirPath / fileName
+      result.add(filePath)
+      break
+
+proc getBinaryPaths*(rootPathList: seq[string]): seq[string] =
+  for pathStr in rootPathList:
+    let binPathList = scanSubDirs(pathStr)
+    result.add(binPathList)
 
 when isMainModule:
   let confData = readConfigFiles()
