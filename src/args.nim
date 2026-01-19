@@ -7,10 +7,11 @@ import errors
 
 type
   CommandType* = enum
-    cmdExec
-    cmdList
-    cmdPrintConf
-    cmdInstall
+    cmtExec
+    cmtList
+    cmtUpdatePaths
+    cmtPrintConf
+    cmtInstall
 
   ArgumentsData* = object
     help: bool
@@ -64,7 +65,7 @@ proc parseArgsRaw(): ref ArgumentsData =
     shortNoVal = {'h', 'l'}, longNoVal = @["help", "list", "print-conf", "install", ""]
   )
 
-  result = (ref ArgumentsData)(commandType: cmdExec)
+  result = (ref ArgumentsData)(commandType: cmtExec)
   while true:
     p.next()
     if p.kind == cmdEnd:
@@ -79,13 +80,13 @@ proc parseArgsRaw(): ref ArgumentsData =
       doAssert p.val != "", "-c/--conf needs filepath argument"
       result.configPathList.add(p.val)
     elif p.key in ["l", "list"]:
-      result.commandType = cmdList
+      result.commandType = cmtList
     elif p.key in ["h", "help"]:
       result.help = true
     elif p.key in ["print-conf"]:
-      result.commandType = cmdPrintConf
+      result.commandType = cmtPrintConf
     elif p.key in ["install"]:
-      result.commandType = cmdInstall
+      result.commandType = cmtInstall
     elif p.kind == cmdArgument:
       result.filePathList.add(p.key)
     elif p.kind == cmdShortOption:

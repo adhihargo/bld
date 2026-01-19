@@ -136,12 +136,12 @@ proc runApp() =
     versionOpts = getVersionOpts(argData.versionSpec, confData.paths)
   confData.sort()
 
-  if argData.commandType == cmdList:
+  if argData.commandType == cmtList:
     stderr.writeLine("> Blender versions registered:")
     for v in versionOpts:
       stderr.writeLine("> -v:", v)
     quit(QuitSuccess)
-  elif argData.commandType == cmdInstall:
+  elif argData.commandType == cmtInstall:
     stderr.writeLine("> Registering self to handle .blend files")
     let binPath = getAppFilename()
     if registerExtHandler(binPath, argData.passedArgs):
@@ -150,7 +150,7 @@ proc runApp() =
     else:
       stderr.writeLine("> Handler registration failed")
       quit(QuitFailure)
-  elif argData.commandType == cmdPrintConf:
+  elif argData.commandType == cmtPrintConf:
     stderr.writeLine("> Configuration data:")
     stderr.writeLine($confData)
     quit(QuitSuccess)
