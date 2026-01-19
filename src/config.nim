@@ -20,7 +20,7 @@ proc readConfigFile(cfgPath: string): ref ConfigData =
 
 proc appendConfigPaths*(extraTblPaths: PathTable) =
   let confPath = $expandTilde(Path("~") / Path(CONFIG_JSON_NAME))
-  appendConfigPathsJSON(confPath, extraTblPaths)
+  updateConfigPathsJSON(confPath, extraTblPaths)
 
 proc readConfigFiles*(userConfPathList: seq[string] = @[]): ref ConfigData =
   let
