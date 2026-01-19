@@ -14,8 +14,8 @@ onFailedAssert(msg):
   submsg = msg.substr(max(0, msg.rfind("` ") + 2))
   raise (ref ConfigError)(msg: submsg)
 
-proc readConfigFileJSON*(fileStream: Stream, filePath: string = ""): JsonNode =
-  doAssert fileStream != nil, "Unable to open config file " & filePath
+proc readConfigFileJSON*(fileStream: Stream, confPath: string = ""): JsonNode =
+  doAssert fileStream != nil, "Unable to open config file " & confPath
 
   var jsConfig = newJObject()
   try:
@@ -25,11 +25,15 @@ proc readConfigFileJSON*(fileStream: Stream, filePath: string = ""): JsonNode =
 
   return jsConfig
 
-proc readConfigFileJSON*(filePath: string): JsonNode =
-  let jsonFile = newFileStream(filePath)
-  return readConfigFileJSON(jsonFile, filePath)
+proc readConfigFileJSON*(confPath: string, create: bool = false): JsonNode =
+  return
+    if not confPath.fileExists and create:
+      newJObject()
+    else:
+      let jsonFile = newFileStream(confPath)
+      readConfigFileJSON(jsonFile, confPath)
 
-proc readConfigRawJSON*(jsConfig: JsonNode): ref ConfigData =
+proc readConfigDataJSON*(jsConfig: JsonNode): ref ConfigData =
   doAssert jsConfig.kind == JObject, "Invalid config JSON data"
   doAssert jsConfig.isValidConfig, "Invalid config JSON schema"
 
@@ -85,7 +89,7 @@ proc readConfigRawJSON*(jsConfig: JsonNode): ref ConfigData =
 
 proc readConfigJSON*(cfgPath: string): ref ConfigData =
   let jsConfig = readConfigFileJSON(cfgPath)
-  result = readConfigRawJSON(jsConfig)
+  result = readConfigDataJSON(jsConfig)
 
 proc writeConfigFileJSON(confPath: string, jsConfig: JsonNode) =
   let jsonFile = newFileStream(confPath, fmWrite)
@@ -93,16 +97,8 @@ proc writeConfigFileJSON(confPath: string, jsConfig: JsonNode) =
     jsonFile.close
   jsonFile.write(jsConfig.pretty)
 
-proc getConfigDataJSON(confPath: string): JsonNode =
-  stderr.writeLine("> Reading existing config file: " & confPath)
-  return
-    if confPath.fileExists:
-      readConfigFileJSON(confPath)
-    else:
-      newJObject()
-
 proc appendConfigPathsJSON*(confPath: string, extraTblPaths: PathTable) =
-  let jsConfig = getConfigDataJSON(confPath)
+  let jsConfig = readConfigFileJSON(confPath, create = true)
   try:
     let jsPaths = jsConfig.fields.getOrDefault("paths", newJObject())
     var tblPaths = jsPaths.jsonTo(PathTable)

@@ -1,7 +1,7 @@
-import std/unittest
 import std/json
 import std/streams
 import std/tables
+import std/unittest
 
 import configjson
 import errors
@@ -16,17 +16,17 @@ test "Read empty JSON file":
 
 test "Read wrong JSON data type":
   expect ConfigError:
-    discard readConfigRawJSON(newJArray())
+    discard readConfigDataJSON(newJArray())
   expect ConfigError:
-    discard readConfigRawJSON(newJBool(true))
+    discard readConfigDataJSON(newJBool(true))
   expect ConfigError:
-    discard readConfigRawJSON(newJFloat(1.0))
+    discard readConfigDataJSON(newJFloat(1.0))
   expect ConfigError:
-    discard readConfigRawJSON(newJInt(1))
+    discard readConfigDataJSON(newJInt(1))
   expect ConfigError:
-    discard readConfigRawJSON(newJNull())
+    discard readConfigDataJSON(newJNull())
   expect ConfigError:
-    discard readConfigRawJSON(newJString(""))
+    discard readConfigDataJSON(newJString(""))
 
 test "Read invalid JSON data string":
   let
@@ -35,14 +35,14 @@ test "Read invalid JSON data string":
   expect ConfigError:
     discard readConfigFileJSON(jsonStream)
 
-test "Read JSON data":
+block:
   let
     jsonDataStr =
       r"""{
   "paths": {
     "1": null,
-    "4.3.2": "C:\prog\blender-4.3.2-windows-x64\blender.exe",
-    "4.4.0": "C:\prog\blender-4.4.0-windows-x64\blender.exe"
+    "4.3.2": "C:\\prog\\blender-4.3.2-windows-x64\\blender.exe",
+    "4.4.0": "C:\\prog\\blender-4.4.0-windows-x64\\blender.exe"
   },
   "switches": {
     "4.3": "--version",
@@ -50,5 +50,7 @@ test "Read JSON data":
   }
 }"""
     jsonData = parseJson(jsonDataStr)
-    cfgData = readConfigRawJSON(jsonData)
-  check cfgData.paths.len == 3
+    confData = readConfigDataJSON(jsonData)
+
+  test "Read JSON data":
+    check confData.paths.len == 3

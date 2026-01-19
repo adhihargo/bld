@@ -15,9 +15,9 @@ onFailedAssert(msg):
   submsg = msg.substr(max(0, msg.rfind("` ") + 1))
   raise (ref ConfigError)(msg: submsg)
 
-proc readConfigFileYAML*(filePath:string): seq[JsonNode] =
-  let yamlFile = newFileStream(filePath)
-  doAssert yamlFile != nil, "Unable to open config file " & filePath
+proc readConfigFileYAML*(confPath: string): seq[JsonNode] =
+  let yamlFile = newFileStream(confPath)
+  doAssert yamlFile != nil, "Unable to open config file " & confPath
 
   try:
     result = loadToJson(yamlFile)
@@ -31,7 +31,7 @@ proc readConfigRawYAML*(jsConfigList: seq[JsonNode]): ref ConfigData =
   let jsConfig = jsConfigList[0]
   doAssert jsConfig.kind == JObject
 
-  let jsVersions = readConfigRawJSON(jsConfig)
+  let jsVersions = readConfigDataJSON(jsConfig)
   return jsVersions
 
 proc readConfigYAML*(cfgPath: string): ref ConfigData =
@@ -48,7 +48,7 @@ when isMainModule:
   except ConfigError as e:
     stderr.writeLine("> Config error: ", e.msg)
     quit(QuitFailure)
-    
+
   if confData != nil:
     echo "> PATHS:"
     for k, v in confData.paths.pairs:

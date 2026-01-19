@@ -41,7 +41,7 @@ let
   }
 }"""
   jsonData = parseJson(jsonDataStr)
-  cfgData = readConfigRawJSON(jsonData)
+  cfgData = readConfigDataJSON(jsonData)
 
 test "Get literal version spec":
   let versionSpec = getVersionSpec("4.3", cfgData.paths)
@@ -77,27 +77,29 @@ test "Get cross-referencing version spec":
 
 test "Get cross-referencing version spec - empty":
   let
-    jsonDataStr = r"""{
+    jsonDataStr =
+      r"""{
   "paths": {
     "4.4.0": "C:\\prog\\blender-2.93.18-windows-x64\\blender.exe",
     "MODELING": ""
   }
 }"""
     jsonData = parseJson(jsonDataStr)
-    cfgData = readConfigRawJSON(jsonData)
+    cfgData = readConfigDataJSON(jsonData)
     versionSpec = getVersionSpec("M", cfgData.paths)
   check versionSpec == VersionSpec(literal: "MODELING", matching: "4.4.0")
 
 test "Get cross-referencing version spec - incomplete":
   let
-    jsonDataStr = r"""{
+    jsonDataStr =
+      r"""{
   "paths": {
     "4.4.0": "C:\\prog\\blender-2.93.18-windows-x64\\blender.exe",
     "MODELING": "4"
   }
 }"""
     jsonData = parseJson(jsonDataStr)
-    cfgData = readConfigRawJSON(jsonData)
+    cfgData = readConfigDataJSON(jsonData)
     versionSpec = getVersionSpec("M", cfgData.paths)
   check versionSpec == VersionSpec(literal: "MODELING", matching: "4.4.0")
 
@@ -107,7 +109,8 @@ test "Get cross-referencing binary path":
 
 test "Get cross-referencing command line switches":
   let
-    jsonDataStr = r"""{
+    jsonDataStr =
+      r"""{
   "paths": {
     "4.4.0": "C:\\prog\\blender-2.93.18-windows-x64\\blender.exe",
     "MODELING": "4.4.0"
@@ -118,14 +121,15 @@ test "Get cross-referencing command line switches":
   }
 }"""
     jsonData = parseJson(jsonDataStr)
-    cfgData = readConfigRawJSON(jsonData)
+    cfgData = readConfigDataJSON(jsonData)
     versionSpec = getVersionSpec("M", cfgData.paths)
     cmdSwitches = getCommandSwitches(versionSpec, cfgData.switches)
   check cmdSwitches == "--switchMOD"
 
 test "Get cross-referencing command line env variables":
   let
-    jsonDataStr = r"""{
+    jsonDataStr =
+      r"""{
   "paths": {
     "4.4.0": "C:\\prog\\blender-2.93.18-windows-x64\\blender.exe",
     "MODELING": "4.4.0"
@@ -136,7 +140,7 @@ test "Get cross-referencing command line env variables":
   }
 }"""
     jsonData = parseJson(jsonDataStr)
-    cfgData = readConfigRawJSON(jsonData)
+    cfgData = readConfigDataJSON(jsonData)
     versionSpec = getVersionSpec("MODEL", cfgData.paths)
     cmdEnvVars = getCommandEnvVars(versionSpec, cfgData.envs)
   check "VARMOD" in cmdEnvVars.keys.toSeq

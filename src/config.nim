@@ -12,6 +12,7 @@ import configyaml
 import errors
 
 proc readConfigFile(cfgPath: string): ref ConfigData =
+  stderr.writeLine("> Reading existing config file: " & cfgPath)
   if splitFile(Path(cfgPath)).ext == ".json":
     return readConfigJSON(cfgPath)
   else:
