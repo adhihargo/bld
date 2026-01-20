@@ -105,8 +105,18 @@ proc updateConfigPathsJSON*(confPath: string, extraTblPaths: PathTable) =
     for i in tblPaths.pairs.toSeq:
       if not fileExists(i[1]):
         tblPaths.del(i[0])
+
+    let existingKeys = tblPaths.keys.toSeq
     for k, v in extraTblPaths:
-      tblPaths[k] = v
+      var
+        k_new = k
+        k_idx = 1
+      while k_new in existingKeys:
+        echo "> ", k_new, " exists"
+        # Add numeric suffix if an existing path uses similar key
+        k_new = k & "_" & intToStr(k_idx)
+        k_idx += 1
+      tblPaths[k_new] = v
     tblPaths.sort(cmp)
     jsConfig["paths"] = tblPaths.toJson
   except JsonKindError as e:

@@ -43,10 +43,8 @@ proc updateExePaths*() =
         fp notin existingBinaryPaths
     )
     newBinaryTable = getBlenderExeVersionTable(newBinaryPaths)
-  if newBinaryTable.len == 0:
-    return
-
-  printExeVersions(newBinaryTable)
+  if newBinaryTable.len > 0:
+    printExeVersions(newBinaryTable)
   appendConfigPaths(newBinaryTable)
 
 proc appendExePaths(exeArgList: seq[string]): bool =
