@@ -39,7 +39,12 @@ FILE_ARG		Any number of file arguments. File
 -v:VERSION_SPEC/	Specify version spec as listed as a
  -VERSION_SPEC		key in config file's 'paths'
 			section.
--u/--update
+-u/--update		Updates executable path list. Parent
+			directory of all listed paths will
+			be searched for other files named
+			'blender.exe' at the same
+			level. Newly-found paths added,
+			nonexistent paths removed.
 -c/--conf=CONFIG_PATH	Specify config file path,
 			repeatable. This overrides default
 			behavior of sequentially reading

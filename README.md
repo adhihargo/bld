@@ -12,13 +12,19 @@ The intention is to write a tool that,
 # Getting Started
 
 1. Download and extract `bld`'s binary archive in any location. The next steps assume that location is included in `PATH` environment variable, otherwise run in a command shell or file manager window pointing to its directory.
-2. Register at least one Blender executable either by drag and drop to `bld` executable in file manager, or run `bld` in command shell with the executables' full path as arguments. An even faster way is to search for all `blender.exe` files in any file manager or tools like [voidtools' Everything](https://www.voidtools.com/), then drag them into `bld`.
-   This will create `bld.json` in home directory (see [Configuration Files](#configfiles)).
+2. Register at least one Blender executable either by drag and drop to `bld` executable in file manager, or run `bld` in command shell with the executables' full path as arguments. An even faster way is to search for all `blender.exe` files in any file manager or tools like [voidtools' Everything](https://www.voidtools.com/), then drag them into `bld`. This will create `bld.json` in home directory (see [Configuration Files](#configfiles)).
+   Later installations, if placed under the same parent directory as previously registered, can be quickly added by running
+   
+   ```shell
+   bld --update
+   ```
+   
+   To read more about this operation, see [Version List Update](#listupdate).
 3. To install `bld` as default handler for `.blend` files, run this command in terminal or through Run dialog:
    ```shell
    bld --install
    ```
-4. Create a `bld.yaml` config file (see [Configuration Files](#configfiles) below) to set run options for each executables added.
+4. Create a `bld.yaml` config file to set run options for each executables added.
 
 # Command Line Arguments<a id="cmdargs"/>
 
@@ -32,6 +38,7 @@ bld FILE_ARG* --v:VERSION_SPEC -c:CONFIG_PATH* FILE_ARG* -
 | ------------------------------- | ------------------------------------------------------------ |
 | `FILE_ARG` | Any number of file arguments. Ones without `.blend*` extension assumed to be executables and will be added into available executable paths. |
 | `-v:VERSION_SPEC` | Specify version spec as listed as a key in config file's `'paths'` section. |
+| `-u`/`--update` | Updates executable path list. Parent directory of all listed paths will be searched for other files named `blender.exe` at the same level. Newly-found paths added, nonexistent paths removed. |
 | `-c`/<br />`--conf=CONFIG_PATH` | Specify config file path, repeatable. This overrides default behavior of sequentially reading predefined config file paths. |
 | `-l`/`--list` | List all version specs registered for the launcher, or if `-v` is used, ones prefixed with `VERSION_SPEC`. |
 | `--print-conf` | Print accumulated configuration data. |
@@ -161,6 +168,26 @@ With this format, users can determine themselves where in the search order new p
 ### Extra Processing for Blender Scripts Path Variables
 
 If `BLENDER_USER_SCRIPTS` or  `BLENDER_SYSTEM_SCRIPTS` is defined in config `envs`, the path in their values will be checked and created if nonexistent, including its subdirectories `addons` and `startup`. The intent is so the user can just specify a path, then install addons into it immediately after launch.
+
+# Version List Update<a id="listupdate"/>
+
+With the amount of version updates, or of custom builds a user may experiment with, manually registering new versions can get unwieldy. `bld` provides an update command that does the following steps:
+
+1. The command `bld --update` collects common parent directories of all executable paths listed. For example, with the following paths listed:
+
+   ```
+   "v01": "C:\prog\ver01\blender.exe"
+   "v02": "C:\prog\ver02\blender.exe"
+   "v03": "C:\prog\blender\stable\ver03\blender.exe"
+   ```
+
+   … Their parent directories are `C:\prog` and `C:\prog\blender\stable`.
+
+1. These paths will be read, looking for files named `blender.exe` in all immediate subdirectories.
+
+1. Pruning paths already registered, these files will be invoked with command line switch `--version` to get its version spec string.
+
+1. Per-user `~/bld.json` will be modified, appending these new executables after removing nonexistent paths. New entries keyed with similar version spec string as existing ones will be given numeric suffix `_[index]`.
 
 ---
 title: bld - Blender Launcher
