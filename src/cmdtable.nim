@@ -56,7 +56,7 @@ proc getVersionSpec*(versionSpec: string, tblPaths: PathTable): VersionSpec =
       if versionSpec2 != nil and fileExists(tblPaths[versionSpec2.literal]):
         return VersionSpec(literal: k, matching: versionSpec2.literal)
 
-proc getCommandBinPath*(versionSpec: VersionSpec, tblPaths: PathTable): string =
+proc getPath*(tblPaths: PathTable, versionSpec: VersionSpec): string =
   doAssert versionSpec != nil, "Version spec must be provided"
 
   let binPath = tblPaths.getOrDefault(versionSpec.matching)
@@ -66,39 +66,26 @@ proc getCommandBinPath*(versionSpec: VersionSpec, tblPaths: PathTable): string =
     else:
       tblPaths.getOrDefault(versionSpec.literal)
 
-proc getCommandSwitches*(versionSpec: VersionSpec, table: PathTable): string =
+template getByVersionSpec(versionSpecStr, table) =
+  let
+    lTable = getVersionTable(versionSpecStr, table, true)
+    lTableKeys = lTable.keys.toSeq.sorted(order=SortOrder.Descending)
+  for k in lTableKeys:
+    return lTable[k]  
+
+proc get*(table: PathTable, versionSpec: VersionSpec): string =
   doAssert versionSpec != nil, "Version spec must be provided"
 
-  let
-    litTable = getVersionTable(versionSpec.literal, table, true)
-    litTableKeys = litTable.keys.toSeq.sorted(order = SortOrder.Descending)
-  for k in litTableKeys:
-    return litTable[k]
-
+  getByVersionSpec(versionSpec.literal, table)
   if versionSpec.matching != "":
-    let
-      matTable = getVersionTable(versionSpec.matching, table, true)
-      matTableKeys = matTable.keys.toSeq.sorted(order = SortOrder.Descending)
-    for k in matTableKeys:
-      return matTable[k]
+    getByVersionSpec(versionSpec.matching, table)
 
-proc getCommandEnvVars*(
-    versionSpec: VersionSpec, table: OrderedTable
-): EnvVarMapping {.inline.} =
+proc get*(table: OrderedTable, versionSpec: VersionSpec): EnvVarMapping =
   doAssert versionSpec != nil, "Version spec must be provided"
 
-  let
-    litTable = getVersionTable(versionSpec.literal, table, true)
-    litTableKeys = litTable.keys.toSeq.sorted(order = SortOrder.Descending)
-  for k in litTableKeys:
-    return litTable[k]
-
+  getByVersionSpec(versionSpec.literal, table)
   if versionSpec.matching != "":
-    let
-      matTable = getVersionTable(versionSpec.matching, table, true)
-      matTableKeys = matTable.keys.toSeq.sorted(order = SortOrder.Descending)
-    for k in matTableKeys:
-      return matTable[k]
+    getByVersionSpec(versionSpec.matching, table)
 
 when isMainModule:
   import config
@@ -116,9 +103,9 @@ when isMainModule:
   let
     versionOpts = getVersionOpts(versionSpec, confData.paths)
     versionSpec1 = getVersionSpec(versionSpec, confData.paths)
-    cmdBinPath = getCommandBinPath(versionSpec1, confData.paths)
-    cmdSwitches = getCommandSwitches(versionSpec1, confData.switches)
-    cmdEnvVars = getCommandEnvVars(versionSpec1, confData.envs)
+    cmdBinPath = confData.paths.getPath(versionSpec1)
+    cmdSwitches = confData.switches.get(versionSpec1)
+    cmdEnvVars = confData.envs.get(versionSpec1)
   echo ""
   echo "versionOpts: ", versionOpts
   echo "versionSpec1: ", versionSpec1

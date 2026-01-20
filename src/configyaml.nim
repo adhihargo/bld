@@ -34,8 +34,8 @@ proc readConfigRawYAML*(jsConfigList: seq[JsonNode]): ref ConfigData =
   let jsVersions = readConfigDataJSON(jsConfig)
   return jsVersions
 
-proc readConfigYAML*(cfgPath: string): ref ConfigData =
-  let jsConfigList = readConfigFileYAML(cfgPath)
+proc readConfigYAML*(confPath: string): ref ConfigData =
+  let jsConfigList = readConfigFileYAML(confPath)
   result = readConfigRawYAML(jsConfigList)
 
 when isMainModule:

@@ -41,38 +41,38 @@ let
   }
 }"""
   jsonData = parseJson(jsonDataStr)
-  cfgData = readConfigDataJSON(jsonData)
+  confData = readConfigDataJSON(jsonData)
 
 test "Get literal version spec":
-  let versionSpec = getVersionSpec("4.3", cfgData.paths)
+  let versionSpec = getVersionSpec("4.3", confData.paths)
   check versionSpec == VersionSpec(literal: "4.3.3")
 
 test "Get latest version spec":
-  let versionSpec = getVersionSpec("", cfgData.paths)
+  let versionSpec = getVersionSpec("", confData.paths)
   check versionSpec == VersionSpec(literal: "4.4.3")
 
 test "Get nonexistent version spec":
-  let versionSpec = getVersionSpec("999", cfgData.paths)
+  let versionSpec = getVersionSpec("999", confData.paths)
   check versionSpec == nil
 
 test "Get binary path":
-  let versionSpec = getVersionSpec("", cfgData.paths)
-  check getCommandBinPath(versionSpec, cfgData.paths) == binPath
+  let versionSpec = getVersionSpec("", confData.paths)
+  check confData.paths.getPath(versionSpec) == binPath
 
 test "Get command line switches":
   let
-    versionSpec = getVersionSpec("", cfgData.paths)
-    cmdSwitches = getCommandSwitches(versionSpec, cfgData.switches)
+    versionSpec = getVersionSpec("", confData.paths)
+    cmdSwitches = confData.switches.get(versionSpec)
   check cmdSwitches == "--switch4.4.3"
 
 test "Get command line environment variables":
   let
-    versionSpec = getVersionSpec("", cfgData.paths)
-    cmdEnvVars = getCommandEnvVars(versionSpec, cfgData.envs)
+    versionSpec = getVersionSpec("", confData.paths)
+    cmdEnvVars = confData.envs.get(versionSpec)
   check "VAR4.4" in cmdEnvVars.keys.toSeq
 
 test "Get cross-referencing version spec":
-  let versionSpec = getVersionSpec("S", cfgData.paths)
+  let versionSpec = getVersionSpec("S", confData.paths)
   check versionSpec == VersionSpec(literal: "STORYBOARD", matching: "4.4.3")
 
 test "Get cross-referencing version spec - empty":
@@ -85,8 +85,8 @@ test "Get cross-referencing version spec - empty":
   }
 }"""
     jsonData = parseJson(jsonDataStr)
-    cfgData = readConfigDataJSON(jsonData)
-    versionSpec = getVersionSpec("M", cfgData.paths)
+    confData = readConfigDataJSON(jsonData)
+    versionSpec = getVersionSpec("M", confData.paths)
   check versionSpec == VersionSpec(literal: "MODELING", matching: "4.4.0")
 
 test "Get cross-referencing version spec - incomplete":
@@ -99,13 +99,13 @@ test "Get cross-referencing version spec - incomplete":
   }
 }"""
     jsonData = parseJson(jsonDataStr)
-    cfgData = readConfigDataJSON(jsonData)
-    versionSpec = getVersionSpec("M", cfgData.paths)
+    confData = readConfigDataJSON(jsonData)
+    versionSpec = getVersionSpec("M", confData.paths)
   check versionSpec == VersionSpec(literal: "MODELING", matching: "4.4.0")
 
 test "Get cross-referencing binary path":
-  let versionSpec = getVersionSpec("S", cfgData.paths)
-  check getCommandBinPath(versionSpec, cfgData.paths) == binPath
+  let versionSpec = getVersionSpec("S", confData.paths)
+  check confData.paths.getPath(versionSpec) == binPath
 
 test "Get cross-referencing command line switches":
   let
@@ -121,9 +121,9 @@ test "Get cross-referencing command line switches":
   }
 }"""
     jsonData = parseJson(jsonDataStr)
-    cfgData = readConfigDataJSON(jsonData)
-    versionSpec = getVersionSpec("M", cfgData.paths)
-    cmdSwitches = getCommandSwitches(versionSpec, cfgData.switches)
+    confData = readConfigDataJSON(jsonData)
+    versionSpec = getVersionSpec("M", confData.paths)
+    cmdSwitches = confData.switches.get(versionSpec)
   check cmdSwitches == "--switchMOD"
 
 test "Get cross-referencing command line env variables":
@@ -140,7 +140,7 @@ test "Get cross-referencing command line env variables":
   }
 }"""
     jsonData = parseJson(jsonDataStr)
-    cfgData = readConfigDataJSON(jsonData)
-    versionSpec = getVersionSpec("MODEL", cfgData.paths)
-    cmdEnvVars = getCommandEnvVars(versionSpec, cfgData.envs)
+    confData = readConfigDataJSON(jsonData)
+    versionSpec = getVersionSpec("MODEL", confData.paths)
+    cmdEnvVars = confData.envs.get(versionSpec)
   check "VARMOD" in cmdEnvVars.keys.toSeq

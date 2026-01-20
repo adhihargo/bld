@@ -130,9 +130,9 @@ proc processCommandExec(
   var cmdStr = ""
   try:
     let
-      cmdBinPath = getCommandBinPath(versionSpec, confData.paths)
-      cmdSwitches = getCommandSwitches(versionSpec, confData.switches)
-      cmdEnvVars = getCommandEnvVars(versionSpec, confData.envs).finalizeEnvVars
+      cmdBinPath = confData.paths.getPath(versionSpec)
+      cmdSwitches = confData.switches.get(versionSpec)
+      cmdEnvVars = confData.envs.get(versionSpec).finalizeEnvVars
       filePath = if filePath == "": filePath else: filePath.quoteShell
     applyEnvVars(cmdEnvVars)
     cmdStr = [cmdBinPath, filePath, cmdSwitches, passedArgs]

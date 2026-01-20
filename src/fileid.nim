@@ -68,7 +68,7 @@ proc execBlenderFileId(fileList: seq[string], tblPaths: PathTable): seq[string] 
 
   let
     versionSpec = getVersionSpec("", tblPaths)
-    cmdBinPath = getCommandBinPath(versionSpec, tblPaths)
+    cmdBinPath = tblPaths.getPath(versionSpec)
   if not fileExists(cmdBinPath):
     stderr.writeLine("> File ID binary path not found: ", cmdBinPath)
     return

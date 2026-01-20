@@ -87,8 +87,8 @@ proc readConfigDataJSON*(jsConfig: JsonNode): ref ConfigData =
           raise newException(JsonParsingError, "Due to asserts, should be unreachable")
       result.envs[verSpec] = envTable
 
-proc readConfigJSON*(cfgPath: string): ref ConfigData =
-  let jsConfig = readConfigFileJSON(cfgPath)
+proc readConfigJSON*(confPath: string): ref ConfigData =
+  let jsConfig = readConfigFileJSON(confPath)
   result = readConfigDataJSON(jsConfig)
 
 proc writeConfigFileJSON(confPath: string, jsConfig: JsonNode) =
