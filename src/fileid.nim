@@ -1,4 +1,3 @@
-import std/nre
 import std/options
 import std/os
 import std/osproc
@@ -8,6 +7,8 @@ import std/strutils
 import std/sugar
 import std/tables
 
+import npeg
+
 import cmdtable
 import configdata
 
@@ -15,44 +16,50 @@ const
   FILEID_BPY_NAME = "fileid_bpy.py"
   FILEID_BPY_CODE = staticRead(FILEID_BPY_NAME)
 
-let
-  BLEND_RE = re"\.blend\d*$"
-  EXE_VERSION_RE = re"^Blender (.+)"
-  BLEND_VERSION_RE = re"(?<major>\d+)\.(?<minor>\d+)\.?(?<patch>\d+)?"
-  FILEID_SCR_PATH = joinPath(getAppFilename().parentDir(), FILEID_BPY_NAME)
+let FILEID_SCR_PATH = joinPath(getAppFilename().parentDir(), FILEID_BPY_NAME)
 
 type VersionTriplet* = array[0 .. 2, int]
 
+let parse_blend_filename = peg "fn":
+  fn <- @".blend" * *Digit * !1
+proc isBlendFileName*(fn: string): bool =
+  parse_blend_filename.match(fn).ok
+
+let parse_exe_version_line = peg("ver", ver_str: string):
+  ver <- "Blender" * +Space * >+1 * !1 do:
+    ver_str = $1
+proc readExeVersionLine*(line: string): Option[string] =
+  var ver_str: string
+  if parse_exe_version_line.match(line, ver_str).ok:
+    return some(ver_str)
+
+let parse_version_triplet = peg("ver", ver_triplet: VersionTriplet):
+  ver <- >+Digit * ver_minor * ?ver_patch do:
+    ver_triplet[0] = parseInt($1)
+  ver_minor <- "." * >+Digit do:
+    ver_triplet[1] = parseInt($1)
+  ver_patch <- "." * >+Digit do:
+    ver_triplet[2] = parseInt($1)
+proc readVersionTriplet*(ver_str: string): Option[VersionTriplet] =
+  var ver_triplet: VersionTriplet
+  if parse_version_triplet.match(ver_str, ver_triplet).ok:
+    return some(ver_triplet)
+
 proc `<=`*(a, b: VersionTriplet): bool =
   a[0] < b[0] or (a[0] == b[0] and a[1] <= b[1])
-
-proc toVersionTriplet*(versionStr: string): Option[VersionTriplet] =
-  let optMatch = versionStr.find(BLEND_VERSION_RE)
-  if optMatch.isSome:
-    var
-      match = optMatch.get()
-      capts = match.captures.toSeq
-      verInts = [0, 0, 0]
-    for i, v in capts:
-      verInts[i] =
-        if v.isSome():
-          v.get().parseInt()
-        else:
-          0
-    return some(verInts)
 
 proc getArgsBlendList*(fileList: seq[string]): seq[string] =
   return filter(
     fileList,
     proc(fn: string): bool =
-      fn.contains(BLEND_RE),
+      fn.isBlendFileName,
   )
 
 proc getArgsExeList*(fileList: seq[string]): seq[string] =
   return filter(
     fileList,
     proc(fn: string): bool =
-      not fn.contains(BLEND_RE),
+      not fn.isBlendFileName,
   )
 
 proc writeBlenderFileIdScript() =
@@ -102,7 +109,7 @@ proc getBlenderFileVersionTable*(
   for l in execResult:
     let
       versionPairRaw = l.split("||", maxsplit = 1)
-      optVersionInts = versionPairRaw[0].toVersionTriplet()
+      optVersionInts = versionPairRaw[0].readVersionTriplet
     if optVersionInts.isNone():
       continue
 
@@ -122,9 +129,10 @@ proc getBlenderExeVersion(filePath: string): string =
   except OSError:
     discard
 
-  var versionMatch = execResult.output.find(EXE_VERSION_RE)
-  if versionMatch.isSome:
-    result = versionMatch.get.captures[0]
+  for line in execResult.output.split("\n"):
+    let exe_version = readExeVersionLine(line)
+    if exe_version.isSome:
+      return exe_version.get()
 
 proc getBlenderExeVersionTable*(fileList: seq[string]): OrderedTable[string, string] =
   let exeTable = collect(initOrderedTable):
@@ -132,7 +140,7 @@ proc getBlenderExeVersionTable*(fileList: seq[string]): OrderedTable[string, str
       let exeVersion = getBlenderExeVersion(exePath)
       if exeVersion != "":
         {exeVersion: exePath}
-  return exeTable  
+  return exeTable
 
 when isMainModule:
   let

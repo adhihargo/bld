@@ -88,7 +88,7 @@ proc processBlendArgs(
     fileVersionTable = getBlenderFileVersionTable(blendArgList, tblPaths)
     verTripletOpts = tblPaths.keys.toSeq.map(
       proc(key: string): (VersionTriplet, string, string) =
-        let optVerTriplet = key.toVersionTriplet
+        let optVerTriplet = key.readVersionTriplet
         let verTriplet =
           if optVerTriplet.isNone:
             [-1, -1, -1]
