@@ -14,7 +14,7 @@ onFailedAssert(msg):
   submsg = msg.substr(max(0, msg.rfind("` ") + 2))
   raise (ref ConfigError)(msg: submsg)
 
-proc readConfigFileJSON*(fileStream: Stream, confPath: string = ""): JsonNode =
+proc readConfigFileJSON(fileStream: Stream, confPath: string = ""): JsonNode =
   doAssert fileStream != nil, "Unable to open config file " & confPath
 
   var jsConfig = newJObject()
@@ -25,7 +25,7 @@ proc readConfigFileJSON*(fileStream: Stream, confPath: string = ""): JsonNode =
 
   return jsConfig
 
-proc readConfigFileJSON*(confPath: string, create: bool = false): JsonNode =
+proc readConfigFileJSON(confPath: string, create: bool = false): JsonNode =
   return
     if not confPath.fileExists and create:
       newJObject()
@@ -33,27 +33,28 @@ proc readConfigFileJSON*(confPath: string, create: bool = false): JsonNode =
       let jsonFile = newFileStream(confPath)
       readConfigFileJSON(jsonFile, confPath)
 
-proc readConfigDataJSON*(jsConfig: JsonNode): ref ConfigData =
+template verify_store_stringtable(jsObj, resultVar, errMsg) =
+  if jsObj.kind != JNull:
+    doAssert jsObj.kind == JObject, errMsg
+    try:
+      resultVar = jsObj.jsonTo(PathTable)
+    except JsonKindError as e:
+      raise newException(ConfigError, e.msg)
+
+proc toConfigData*(jsConfig: JsonNode): ref ConfigData =
   doAssert jsConfig.kind == JObject, "Invalid config JSON data"
   doAssert jsConfig.isValidConfig, "Invalid config JSON schema"
 
   result = new(ConfigData)
   let jsPaths = jsConfig.fields.getOrDefault("paths", newJNull())
-  if jsPaths.kind != JNull:
-    doAssert jsPaths.kind == JObject, "Paths config JSON object must be a dictionary"
-    try:
-      result.paths = jsPaths.jsonTo(PathTable)
-    except JsonKindError as e:
-      raise newException(ConfigError, e.msg)
+  verify_store_stringtable(
+    jsPaths, result.paths, "Paths config JSON object must be a dictionary"
+  )
 
   let jsSwitches = jsConfig.fields.getOrDefault("switches", newJNull())
-  if jsSwitches.kind != JNull:
-    doAssert jsSwitches.kind == JObject,
-      "Switches config JSON object must be a dictionary"
-    try:
-      result.switches = jsSwitches.jsonTo(PathTable)
-    except JsonKindError as e:
-      raise newException(ConfigError, e.msg)
+  verify_store_stringtable(
+    jsSwitches, result.switches, "Switches config JSON object must be a dictionary"
+  )
 
   let jsEnvs = jsConfig.fields.getOrDefault("envs", newJNull())
   if jsEnvs.kind != JNull:
@@ -89,7 +90,7 @@ proc readConfigDataJSON*(jsConfig: JsonNode): ref ConfigData =
 
 proc readConfigJSON*(confPath: string): ref ConfigData =
   let jsConfig = readConfigFileJSON(confPath)
-  result = readConfigDataJSON(jsConfig)
+  result = jsConfig.toConfigData
 
 proc writeConfigFileJSON(confPath: string, jsConfig: JsonNode) =
   let jsonFile = newFileStream(confPath, fmWrite)
@@ -123,34 +124,3 @@ proc updateConfigPathsJSON*(confPath: string, extraTblPaths: PathTable) =
     raise newException(ConfigError, e.msg)
 
   writeConfigFileJSON(confPath, jsConfig)
-
-when isMainModule:
-  import std/paths
-  import constants
-
-  let
-    extraTblPaths = {"A": "C01", "B": "B01"}.toOrderedTable
-    confPath = $expandTilde(Path("~") / Path(CONFIG_JSON_NAME))
-  try:
-    updateConfigPathsJSON(confPath, extraTblPaths)
-  except ConfigError as e:
-    stderr.writeLine("> Config error: " & e.msg)
-    quit(QuitFailure)
-
-  var confData: ref ConfigData
-  try:
-    confData = readConfigJSON(confPath)
-  except ConfigError as e:
-    echo "> Config error: ", e.msg
-    quit(QuitFailure)
-
-  if confData != nil:
-    echo "> PATHS:"
-    for k, v in confData.paths.pairs:
-      echo k, ": ", v
-    echo "> SWITCHES:"
-    for k, v in confData.switches.pairs:
-      echo k, ": ", v
-    echo "> ENVS:"
-    for k, v in confData.envs.pairs:
-      echo k, ": ", v

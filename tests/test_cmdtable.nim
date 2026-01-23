@@ -41,7 +41,7 @@ let
   }
 }"""
   jsonData = parseJson(jsonDataStr)
-  confData = readConfigDataJSON(jsonData)
+  confData = jsonData.toConfigData
 
 test "Get literal version spec":
   let versionSpec = getVersionSpec("4.3", confData.paths)
@@ -85,7 +85,7 @@ test "Get cross-referencing version spec - empty":
   }
 }"""
     jsonData = parseJson(jsonDataStr)
-    confData = readConfigDataJSON(jsonData)
+    confData = jsonData.toConfigData
     versionSpec = getVersionSpec("M", confData.paths)
   check versionSpec == VersionSpec(literal: "MODELING", matching: "4.4.0")
 
@@ -99,7 +99,7 @@ test "Get cross-referencing version spec - incomplete":
   }
 }"""
     jsonData = parseJson(jsonDataStr)
-    confData = readConfigDataJSON(jsonData)
+    confData = jsonData.toConfigData
     versionSpec = getVersionSpec("M", confData.paths)
   check versionSpec == VersionSpec(literal: "MODELING", matching: "4.4.0")
 
@@ -121,7 +121,7 @@ test "Get cross-referencing command line switches":
   }
 }"""
     jsonData = parseJson(jsonDataStr)
-    confData = readConfigDataJSON(jsonData)
+    confData = jsonData.toConfigData
     versionSpec = getVersionSpec("M", confData.paths)
     cmdSwitches = confData.switches.get(versionSpec)
   check cmdSwitches == "--switchMOD"
@@ -140,7 +140,7 @@ test "Get cross-referencing command line env variables":
   }
 }"""
     jsonData = parseJson(jsonDataStr)
-    confData = readConfigDataJSON(jsonData)
+    confData = jsonData.toConfigData
     versionSpec = getVersionSpec("MODEL", confData.paths)
     cmdEnvVars = confData.envs.get(versionSpec)
   check "VARMOD" in cmdEnvVars.keys.toSeq

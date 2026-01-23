@@ -31,7 +31,7 @@ proc readConfigRawYAML*(jsConfigList: seq[JsonNode]): ref ConfigData =
   let jsConfig = jsConfigList[0]
   doAssert jsConfig.kind == JObject
 
-  let jsVersions = readConfigDataJSON(jsConfig)
+  let jsVersions = jsConfig.toConfigData
   return jsVersions
 
 proc readConfigYAML*(confPath: string): ref ConfigData =

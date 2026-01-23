@@ -1,10 +1,9 @@
-import std/json
-import std/streams
-import std/tables
+include configjson
+
+import std/paths
 import std/unittest
 
-import configjson
-import errors
+import constants
 
 test "Read nonexistent file":
   expect ConfigError:
@@ -16,17 +15,17 @@ test "Read empty JSON file":
 
 test "Read wrong JSON data type":
   expect ConfigError:
-    discard readConfigDataJSON(newJArray())
+    discard newJArray().toConfigData
   expect ConfigError:
-    discard readConfigDataJSON(newJBool(true))
+    discard newJBool(true).toConfigData
   expect ConfigError:
-    discard readConfigDataJSON(newJFloat(1.0))
+    discard newJFloat(1.0).toConfigData
   expect ConfigError:
-    discard readConfigDataJSON(newJInt(1))
+    discard newJInt(1).toConfigData
   expect ConfigError:
-    discard readConfigDataJSON(newJNull())
+    discard newJNull().toConfigData
   expect ConfigError:
-    discard readConfigDataJSON(newJString(""))
+    discard newJString("").toConfigData
 
 test "Read invalid JSON data string":
   let
@@ -50,7 +49,38 @@ block:
   }
 }"""
     jsonData = parseJson(jsonDataStr)
-    confData = readConfigDataJSON(jsonData)
+    confData = jsonData.toConfigData
 
   test "Read JSON data":
     check confData.paths.len == 3
+
+proc main() =
+  let
+    extraTblPaths = {"A": "C01", "B": "B01"}.toOrderedTable
+    confPath = $expandTilde(Path("~") / Path(CONFIG_JSON_NAME))
+  try:
+    updateConfigPathsJSON(confPath, extraTblPaths)
+  except ConfigError as e:
+    stderr.writeLine("> Config error: " & e.msg)
+    quit(QuitFailure)
+
+  var confData: ref ConfigData
+  try:
+    confData = readConfigJSON(confPath)
+  except ConfigError as e:
+    echo "> Config error: ", e.msg
+    quit(QuitFailure)
+
+  if confData != nil:
+    echo "> PATHS:"
+    for k, v in confData.paths.pairs:
+      echo k, ": ", v
+    echo "> SWITCHES:"
+    for k, v in confData.switches.pairs:
+      echo k, ": ", v
+    echo "> ENVS:"
+    for k, v in confData.envs.pairs:
+      echo k, ": ", v
+
+when isMainModule:
+  main()
