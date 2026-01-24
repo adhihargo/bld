@@ -15,7 +15,7 @@ onFailedAssert(msg):
   submsg = msg.substr(max(0, msg.rfind("` ") + 1))
   raise (ref ConfigError)(msg: submsg)
 
-proc readConfigFileYAML*(confPath: string): seq[JsonNode] =
+proc readConfigFileYAML(confPath: string): seq[JsonNode] =
   let yamlFile = newFileStream(confPath)
   doAssert yamlFile != nil, "Unable to open config file " & confPath
 
@@ -25,7 +25,7 @@ proc readConfigFileYAML*(confPath: string): seq[JsonNode] =
     let mark = e.mark
     raise newException(ConfigError, &"[{mark.line}:{mark.column}] " & e.msg)
 
-proc readConfigRawYAML*(jsConfigList: seq[JsonNode]): ref ConfigData =
+proc readConfigRawYAML(jsConfigList: seq[JsonNode]): ref ConfigData =
   doAssert jsConfigList.len > 0, "File is empty"
 
   let jsConfig = jsConfigList[0]
@@ -37,25 +37,3 @@ proc readConfigRawYAML*(jsConfigList: seq[JsonNode]): ref ConfigData =
 proc readConfigYAML*(confPath: string): ref ConfigData =
   let jsConfigList = readConfigFileYAML(confPath)
   result = readConfigRawYAML(jsConfigList)
-
-when isMainModule:
-  import std/tables
-  import constants
-
-  var confData: ref ConfigData
-  try:
-    confData = readConfigYAML(CONFIG_YAML_NAME)
-  except ConfigError as e:
-    stderr.writeLine("> Config error: ", e.msg)
-    quit(QuitFailure)
-
-  if confData != nil:
-    echo "> PATHS:"
-    for k, v in confData.paths.pairs:
-      echo k, ": ", v
-    echo "> SWITCHES:"
-    for k, v in confData.switches.pairs:
-      echo k, ": ", v
-    echo "> ENVS:"
-    for k, v in confData.envs.pairs:
-      echo k, ": ", v
