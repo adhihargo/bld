@@ -39,7 +39,7 @@ bld FILE_ARG* --v:VERSION_SPEC -c:CONFIG_PATH* FILE_ARG* -
 | `FILE_ARG` | Any number of file arguments. Ones without `.blend*` extension assumed to be executables and will be added into available executable paths. |
 | `-v:VERSION_SPEC` | Specify version spec as listed as a key in config file's `'paths'` section. |
 | `-u`/`--update` | Updates executable path list. Parent directory of all listed paths will be searched for other files named `blender.exe` at the same level. Newly-found paths added, nonexistent paths removed. |
-| `-c`/<br />`--conf=CONFIG_PATH` | Specify config file path, repeatable. This overrides default behavior of sequentially reading predefined config file paths. |
+| `-c`/<br />`--conf=CONFIG_PATH` | Specify config file path, repeatable. These paths will be read after predefined config file paths. |
 | `-l`/`--list` | List all version specs registered for the launcher, or if `-v` is used, ones prefixed with `VERSION_SPEC`. |
 | `--print-conf` | Print accumulated configuration data. |
 | `--install` | **[WND]** Register this executable as default handler for `.blend` files. Arguments passed after `-`/`--` will be added in the resulting `bld` command. |

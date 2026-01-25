@@ -13,7 +13,6 @@ import configyaml
 import errors
 
 proc readConfigFile*(confPath: string): ref ConfigData =
-  stderr.writeLine("> Reading existing config file: " & confPath)
   if splitFile(Path(confPath)).ext == ".json":
     return readConfigJSON(confPath)
   else:
@@ -27,19 +26,20 @@ proc readConfigFiles*(userConfPathList: seq[string] = @[]): ref ConfigData =
   let
     confJsonName = Path(CONFIG_JSON_NAME)
     confYamlName = Path(CONFIG_YAML_NAME)
-    confPathSet =
-      if userConfPathList.len == 0:
-        [
-          expandTilde(Path("~") / confJsonName),
-          expandTilde(Path("~") / confYamlName),
-          getAppDir().Path() / confJsonName,
-          getAppDir().Path() / confYamlName,
-        ].toOrderedSet
-      else:
-        userConfPathList.map(
-          proc(i: string): Path =
-            Path(i)
-        ).toOrderedSet
+  var confPathList =
+    @[
+      expandTilde(Path("~") / confJsonName),
+      expandTilde(Path("~") / confYamlName),
+      getAppDir().Path() / confJsonName,
+      getAppDir().Path() / confYamlName,
+    ]
+  confPathList.add(
+    userConfPathList.map(
+      proc(i: string): Path =
+        Path(i)
+    )
+  )
+  let confPathSet = confPathList.toOrderedSet
 
   result = new ConfigData
   var fileConfData: ref ConfigData

@@ -46,9 +46,8 @@ FILE_ARG		Any number of file arguments. File
 			level. Newly-found paths added,
 			nonexistent paths removed.
 -c/--conf=CONFIG_PATH	Specify config file path,
-			repeatable. This overrides default
-			behavior of sequentially reading
-			predefined config file paths.
+			repeatable. These paths will be read
+			after predefined config file paths.
 -l/--list		List all version specs registered
 			for the launcher, or if -v is used,
 			ones prefixed with VERSION_SPEC.
