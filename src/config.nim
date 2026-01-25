@@ -90,6 +90,3 @@ proc getBinaryPaths*(rootPathList: seq[string]): seq[string] =
     let binPathList = scanSubDirs(pathStr)
     result.add(binPathList)
 
-when isMainModule:
-  let confData = readConfigFiles()
-  echo "confData: ", confData

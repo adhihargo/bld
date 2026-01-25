@@ -141,33 +141,3 @@ proc getBlenderExeVersionTable*(fileList: seq[string]): OrderedTable[string, str
       if exeVersion != "":
         {exeVersion: exePath}
   return exeTable
-
-when isMainModule:
-  let
-    fileList = @[
-      "a.blend",
-      "b.blend1",
-      "c.exe",
-      "d.blend2",
-      r"C:\prog\blender-4.2.0-windows-x64\blender.exe",
-      r"C:\prog\blender-2.92_Parallax-Occlusion-Mapping\blender-2.92.0-git.7f0cdf968810-windows64\blender.exe",
-      r"S:\sketch\nature_15.kra",
-    ]
-    blendList = getArgsBlendList(fileList)
-    exeList = getArgsExeList(fileList)
-  echo "blendList: ", blendList
-  echo "exeList: ", exeList
-  echo ""
-
-  import config
-  let confData = readConfigFiles()
-  if confData == nil:
-    quit(QuitFailure)
-
-  let versionTable = getBlenderFileVersionTable(blendList, confData.paths)
-  for fp, fv in versionTable.pairs:
-    echo fp, ": ", fv
-
-  for exePath in exeList:
-    echo "getBlenderExeVersion(exePath): ", getBlenderExeVersion(exePath)
-    echo "exePath: ", exePath

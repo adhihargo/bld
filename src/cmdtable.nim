@@ -69,9 +69,9 @@ proc getPath*(tblPaths: PathTable, versionSpec: VersionSpec): string =
 template getByVersionSpec(versionSpecStr, table) =
   let
     lTable = getVersionTable(versionSpecStr, table, true)
-    lTableKeys = lTable.keys.toSeq.sorted(order=SortOrder.Descending)
+    lTableKeys = lTable.keys.toSeq.sorted(order = SortOrder.Descending)
   for k in lTableKeys:
-    return lTable[k]  
+    return lTable[k]
 
 proc get*(table: PathTable, versionSpec: VersionSpec): string =
   doAssert versionSpec != nil, "Version spec must be provided"
@@ -86,29 +86,3 @@ proc get*(table: OrderedTable, versionSpec: VersionSpec): EnvVarMapping =
   getByVersionSpec(versionSpec.literal, table)
   if versionSpec.matching != "":
     getByVersionSpec(versionSpec.matching, table)
-
-when isMainModule:
-  import config
-  import configdata
-
-  let
-    confData = readConfigFiles()
-    versionSpec =
-      if paramCount() > 0:
-        paramStr(1)
-      else:
-        ""
-  confData.sort()
-
-  let
-    versionOpts = getVersionOpts(versionSpec, confData.paths)
-    versionSpec1 = getVersionSpec(versionSpec, confData.paths)
-    cmdBinPath = confData.paths.getPath(versionSpec1)
-    cmdSwitches = confData.switches.get(versionSpec1)
-    cmdEnvVars = confData.envs.get(versionSpec1)
-  echo ""
-  echo "versionOpts: ", versionOpts
-  echo "versionSpec1: ", versionSpec1
-  echo "cmdBinPath: ", cmdBinPath
-  echo "cmdSwitches: ", cmdSwitches
-  echo "cmdEnvVars: ", cmdEnvVars

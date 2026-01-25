@@ -1,10 +1,11 @@
+include cmdtable
+
 import std/json
-import std/sequtils
-import std/tables
 import std/unittest
 
+import config
 import configjson
-import cmdtable
+
 
 let
   binPath = r"C:\prog\blender-2.93.18-windows-x64\blender.exe"
@@ -144,3 +145,29 @@ test "Get cross-referencing command line env variables":
     versionSpec = getVersionSpec("MODEL", confData.paths)
     cmdEnvVars = confData.envs.get(versionSpec)
   check "VARMOD" in cmdEnvVars.keys.toSeq
+
+proc main() =
+  let
+    confData = readConfigFiles()
+    versionSpec =
+      if paramCount() > 0:
+        paramStr(1)
+      else:
+        ""
+  confData.sort()
+
+  let
+    versionOpts = getVersionOpts(versionSpec, confData.paths)
+    versionSpec1 = getVersionSpec(versionSpec, confData.paths)
+    cmdBinPath = confData.paths.getPath(versionSpec1)
+    cmdSwitches = confData.switches.get(versionSpec1)
+    cmdEnvVars = confData.envs.get(versionSpec1)
+  echo ""
+  echo "versionOpts: ", versionOpts
+  echo "versionSpec1: ", versionSpec1
+  echo "cmdBinPath: ", cmdBinPath
+  echo "cmdSwitches: ", cmdSwitches
+  echo "cmdEnvVars: ", cmdEnvVars
+
+when isMainModule:
+  main()
