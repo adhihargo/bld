@@ -150,7 +150,15 @@ proc processCommandExec(
 proc runApp() =
   let
     argData = getArgData()
-    confData = readConfigFiles(argData.configPathList)
+    blendArgList = getArgsBlendList(argData.filePathList)
+  var configPathList = argData.configPathList
+  if blendArgList.len > 0:
+    configPathList.add(
+      findAtPathHierarchy(@[CONFIG_JSON_NAME, CONFIG_YAML_NAME], blendArgList[0])
+    )
+
+  let
+    confData = readConfigFiles(configPathList)
     versionOpts = getVersionOpts(argData.versionSpec, confData.paths)
   confData.sort()
 
@@ -194,7 +202,6 @@ proc runApp() =
 
   # passed blend file arguments directly, call each with appropriate
   # Blender version if available.
-  let blendArgList = getArgsBlendList(argData.filePathList)
   if blendArgList.len > 0:
     processBlendArgs(blendArgList, versionSpec, confData, argData.passedArgs)
   else:

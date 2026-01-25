@@ -12,6 +12,31 @@ import configjson
 import configyaml
 import errors
 
+proc findAtPathHierarchy*(fileNameList: seq[string], basePath: string): seq[string] =
+  ## Find file names `fileNameList` in every directories starting from
+  ## `basePath` up to its root path (if base path is a file, get its
+  ## directory). Stops at the first level such files is found.
+
+  let baseDir =
+    if basePath.dirExists:
+      basePath
+    elif basePath.fileExists:
+      basePath.parentDir
+    else:
+      ""
+  if baseDir == "":
+    return
+
+  var found = false
+  for dirPath in baseDir.parentDirs:
+    for fileName in fileNameList:
+      let filePath = dirPath / fileName
+      if filePath.fileExists:
+        result.add(filePath)
+        found = true
+    if found:
+      break
+
 proc readConfigFile*(confPath: string): ref ConfigData =
   if splitFile(Path(confPath)).ext == ".json":
     return readConfigJSON(confPath)
