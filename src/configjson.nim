@@ -112,7 +112,7 @@ proc toConfigData*(jsConfig: JsonNode, confPath: string = ""): ref ConfigData =
               return j.str.toAbsPath(confDirPath),
           )
         of JString:
-          envTable[envK] = @[envV.str]
+          envTable[envK] = @[envV.str.toAbsPath(confDirPath)]
         else:
           raise newException(JsonParsingError, "Due to asserts, should be unreachable")
       result.envs[verSpec] = envTable
