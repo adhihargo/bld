@@ -75,7 +75,7 @@ proc execBlenderFileId(fileList: seq[string], confData: ref ConfigData): seq[str
 
   let
     tblPaths = confData.paths
-    versionSpec = getVersionSpec("", confData)
+    versionSpec = confData.getVersionSpec()
     cmdBinPath = tblPaths.getPath(versionSpec)
   if not fileExists(cmdBinPath):
     stderr.writeLine("> File ID binary path not found: ", cmdBinPath)

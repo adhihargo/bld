@@ -38,24 +38,23 @@ proc getVersionTable(
       ):
         {k: v}
 
-proc getVersionOpts*(versionSpec: string, confData: ref ConfigData): seq[string] =
-  let
-    tblPaths: PathTable = confData.paths
-    ctxTblPaths: PathTable = getVersionTable(versionSpec, tblPaths)
-  return ctxTblPaths.keys.toSeq
-
-proc getVersionSpec*(versionSpec: string, confData: ref ConfigData): VersionSpec =
+proc getVersionOpts*(confData: ref ConfigData, versionSpec: string): seq[string] =
   let
     tblPaths = confData.paths
-    litTable = getVersionTable(versionSpec, tblPaths)
-    litTableKeys = litTable.keys.toSeq.sorted(order = SortOrder.Descending)
+    ctxTblPaths = getVersionTable(versionSpec, tblPaths)
+  return ctxTblPaths.keys.toSeq
+
+proc getVersionSpec*(confData: ref ConfigData, versionSpec: string = ""): VersionSpec =
+  let
+    tblPaths = confData.paths
+    litTableKeys = confData.getVersionOpts(versionSpec).sorted(order = SortOrder.Descending)
   for k in litTableKeys:
-    let v = litTable[k]
+    let v = tblPaths[k]
     if fileExists(v):
       return VersionSpec(literal: k)
     elif versionSpec != "":
       # version spec cross reference
-      let versionSpec2 = getVersionSpec(v, confData)
+      let versionSpec2 = confData.getVersionSpec(v)
       if versionSpec2 != nil and fileExists(tblPaths[versionSpec2.literal]):
         return VersionSpec(literal: k, matching: versionSpec2.literal)
 
