@@ -70,11 +70,12 @@ proc writeBlenderFileIdScript() =
       f_obj.close()
     f_obj.write(FILEID_BPY_CODE)
 
-proc execBlenderFileId(fileList: seq[string], tblPaths: PathTable): seq[string] =
+proc execBlenderFileId(fileList: seq[string], confData: ref ConfigData): seq[string] =
   writeBlenderFileIdScript()
 
   let
-    versionSpec = getVersionSpec("", tblPaths)
+    tblPaths = confData.paths
+    versionSpec = getVersionSpec("", confData)
     cmdBinPath = tblPaths.getPath(versionSpec)
   if not fileExists(cmdBinPath):
     stderr.writeLine("> File ID binary path not found: ", cmdBinPath)
@@ -99,9 +100,9 @@ proc execBlenderFileId(fileList: seq[string], tblPaths: PathTable): seq[string] 
         l
 
 proc getBlenderFileVersionTable*(
-    fileList: seq[string], tblPaths: PathTable
+    fileList: seq[string], confData: ref ConfigData
 ): OrderedTable[string, Option[VersionTriplet]] =
-  let execResult = execBlenderFileId(fileList, tblPaths)
+  let execResult = execBlenderFileId(fileList, confData)
   if execResult.len == 0:
     return
 

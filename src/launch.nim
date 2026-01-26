@@ -84,8 +84,8 @@ proc processBlendArgs(
 
   let
     tblPaths = confData.paths
-    latestVersionSpec = getVersionSpec("", tblPaths)
-    fileVersionTable = getBlenderFileVersionTable(blendArgList, tblPaths)
+    latestVersionSpec = getVersionSpec("", confData)
+    fileVersionTable = getBlenderFileVersionTable(blendArgList, confData)
     verTripletOpts = tblPaths.keys.toSeq.map(
       proc(key: string): (VersionTriplet, string, string) =
         let optVerTriplet = key.readVersionTriplet
@@ -105,7 +105,7 @@ proc processBlendArgs(
     for vTuple in verTripletOpts:
       let fileVersion = optFileVersion.get()
       if vTuple[0] >= fileVersion and vTuple[2].fileExists:
-        let versionSpec = getVersionSpec(vTuple[1], tblPaths)
+        let versionSpec = getVersionSpec(vTuple[1], confData)
         stderr.writeLine("> File version: ", fileVersion)
         processCommandExec(versionSpec, confData, filePath, passedArgs)
         break
@@ -159,7 +159,7 @@ proc runApp() =
 
   let
     confData = readConfigFiles(configPathList)
-    versionOpts = getVersionOpts(argData.versionSpec, confData.paths)
+    versionOpts = getVersionOpts(argData.versionSpec, confData)
   confData.sort()
 
   if argData.commandType == cmtUpdatePaths:
@@ -193,7 +193,7 @@ proc runApp() =
     stderr.writeLine("> No available version specs, exiting")
     quit(QuitFailure)
 
-  let versionSpec = getVersionSpec(argData.versionSpec, confData.paths)
+  let versionSpec = getVersionSpec(argData.versionSpec, confData)
   if versionSpec == nil:
     var versionOptsStr = join(versionOpts, ", ")
     stderr.writeLine("> Invalid version spec: ", argData.versionSpec)

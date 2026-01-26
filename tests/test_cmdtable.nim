@@ -45,35 +45,35 @@ let
   confData = jsonData.toConfigData
 
 test "Get literal version spec":
-  let versionSpec = getVersionSpec("4.3", confData.paths)
+  let versionSpec = getVersionSpec("4.3", confData)
   check versionSpec == VersionSpec(literal: "4.3.3")
 
 test "Get latest version spec":
-  let versionSpec = getVersionSpec("", confData.paths)
+  let versionSpec = getVersionSpec("", confData)
   check versionSpec == VersionSpec(literal: "4.4.3")
 
 test "Get nonexistent version spec":
-  let versionSpec = getVersionSpec("999", confData.paths)
+  let versionSpec = getVersionSpec("999", confData)
   check versionSpec == nil
 
 test "Get binary path":
-  let versionSpec = getVersionSpec("", confData.paths)
+  let versionSpec = getVersionSpec("", confData)
   check confData.paths.getPath(versionSpec) == binPath
 
 test "Get command line switches":
   let
-    versionSpec = getVersionSpec("", confData.paths)
+    versionSpec = getVersionSpec("", confData)
     cmdSwitches = confData.switches.get(versionSpec)
   check cmdSwitches == "--switch4.4.3"
 
 test "Get command line environment variables":
   let
-    versionSpec = getVersionSpec("", confData.paths)
+    versionSpec = getVersionSpec("", confData)
     cmdEnvVars = confData.envs.get(versionSpec)
   check "VAR4.4" in cmdEnvVars.keys.toSeq
 
 test "Get cross-referencing version spec":
-  let versionSpec = getVersionSpec("S", confData.paths)
+  let versionSpec = getVersionSpec("S", confData)
   check versionSpec == VersionSpec(literal: "STORYBOARD", matching: "4.4.3")
 
 test "Get cross-referencing version spec - empty":
@@ -87,7 +87,7 @@ test "Get cross-referencing version spec - empty":
 }"""
     jsonData = parseJson(jsonDataStr)
     confData = jsonData.toConfigData
-    versionSpec = getVersionSpec("M", confData.paths)
+    versionSpec = getVersionSpec("M", confData)
   check versionSpec == VersionSpec(literal: "MODELING", matching: "4.4.0")
 
 test "Get cross-referencing version spec - incomplete":
@@ -101,11 +101,11 @@ test "Get cross-referencing version spec - incomplete":
 }"""
     jsonData = parseJson(jsonDataStr)
     confData = jsonData.toConfigData
-    versionSpec = getVersionSpec("M", confData.paths)
+    versionSpec = getVersionSpec("M", confData)
   check versionSpec == VersionSpec(literal: "MODELING", matching: "4.4.0")
 
 test "Get cross-referencing binary path":
-  let versionSpec = getVersionSpec("S", confData.paths)
+  let versionSpec = getVersionSpec("S", confData)
   check confData.paths.getPath(versionSpec) == binPath
 
 test "Get cross-referencing command line switches":
@@ -123,7 +123,7 @@ test "Get cross-referencing command line switches":
 }"""
     jsonData = parseJson(jsonDataStr)
     confData = jsonData.toConfigData
-    versionSpec = getVersionSpec("M", confData.paths)
+    versionSpec = getVersionSpec("M", confData)
     cmdSwitches = confData.switches.get(versionSpec)
   check cmdSwitches == "--switchMOD"
 
@@ -142,7 +142,7 @@ test "Get cross-referencing command line env variables":
 }"""
     jsonData = parseJson(jsonDataStr)
     confData = jsonData.toConfigData
-    versionSpec = getVersionSpec("MODEL", confData.paths)
+    versionSpec = getVersionSpec("MODEL", confData)
     cmdEnvVars = confData.envs.get(versionSpec)
   check "VARMOD" in cmdEnvVars.keys.toSeq
 
@@ -157,8 +157,8 @@ proc main() =
   confData.sort()
 
   let
-    versionOpts = getVersionOpts(versionSpec, confData.paths)
-    versionSpec1 = getVersionSpec(versionSpec, confData.paths)
+    versionOpts = getVersionOpts(versionSpec, confData)
+    versionSpec1 = getVersionSpec(versionSpec, confData)
     cmdBinPath = confData.paths.getPath(versionSpec1)
     cmdSwitches = confData.switches.get(versionSpec1)
     cmdEnvVars = confData.envs.get(versionSpec1)

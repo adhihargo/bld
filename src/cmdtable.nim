@@ -26,24 +26,27 @@ proc `==`*(a, b: VersionSpec): bool =
     (a.isNil and b.isNil) or
     (not (a.isNil or b.isNil) and a.literal == b.literal and a.matching == b.matching)
 
-proc getVersionTable*(
-    versionSpec: string, tblPaths: OrderedTable, reverse: bool = false
+proc getVersionTable(
+    versionSpec: string, table: OrderedTable, reverse: bool = false
 ): OrderedTable {.inline.} =
   let emptyVersionSpec = versionSpec.strip() == ""
   return collect(initOrderedTable()):
-    for k, v in tblPaths.pairs:
+    for k, v in table.pairs:
       if emptyVersionSpec or (
         not emptyVersionSpec and
         ((reverse and versionSpec.startsWith(k)) or k.startsWith(versionSpec))
       ):
         {k: v}
 
-proc getVersionOpts*(versionSpec: string, tblPaths: PathTable): seq[string] =
-  let ctxTblPaths: PathTable = getVersionTable(versionSpec, tblPaths)
+proc getVersionOpts*(versionSpec: string, confData: ref ConfigData): seq[string] =
+  let
+    tblPaths: PathTable = confData.paths
+    ctxTblPaths: PathTable = getVersionTable(versionSpec, tblPaths)
   return ctxTblPaths.keys.toSeq
 
-proc getVersionSpec*(versionSpec: string, tblPaths: PathTable): VersionSpec =
+proc getVersionSpec*(versionSpec: string, confData: ref ConfigData): VersionSpec =
   let
+    tblPaths = confData.paths
     litTable = getVersionTable(versionSpec, tblPaths)
     litTableKeys = litTable.keys.toSeq.sorted(order = SortOrder.Descending)
   for k in litTableKeys:
@@ -52,7 +55,7 @@ proc getVersionSpec*(versionSpec: string, tblPaths: PathTable): VersionSpec =
       return VersionSpec(literal: k)
     elif versionSpec != "":
       # version spec cross reference
-      let versionSpec2 = getVersionSpec(v, tblPaths)
+      let versionSpec2 = getVersionSpec(v, confData)
       if versionSpec2 != nil and fileExists(tblPaths[versionSpec2.literal]):
         return VersionSpec(literal: k, matching: versionSpec2.literal)
 

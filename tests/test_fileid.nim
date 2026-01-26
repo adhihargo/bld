@@ -50,7 +50,7 @@ proc main() =
   if confData == nil:
     quit(QuitFailure)
 
-  let versionTable = getBlenderFileVersionTable(blendList, confData.paths)
+  let versionTable = getBlenderFileVersionTable(blendList, confData)
   for fp, fv in versionTable.pairs:
     echo "FILE: ", fp, ": ", fv
 
