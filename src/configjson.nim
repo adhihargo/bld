@@ -6,6 +6,8 @@ import std/streams
 import std/strutils
 import std/tables
 
+import npeg
+
 import configdata
 import errors
 
@@ -13,6 +15,31 @@ onFailedAssert(msg):
   var submsg = msg
   submsg = msg.substr(max(0, msg.rfind("` ") + 2))
   raise (ref ConfigError)(msg: submsg)
+
+let parse_rel_path = peg("rel_path", parentLevel: int):
+  rel_path <- '\\'[2] * ?parent_ref * &!'\\'
+  parent_ref <- ?('.' * >*'.') * '\\':
+    parentLevel = len($1)
+proc toAbsPath(pathStr, basePath: string): string =
+  ## Replace relative path prefix in `pathStr` with `basePath`. The
+  ## prefix is a double-backslash, followed by an optional sequence of
+  ## periods counting levels of directories to go up ended by a
+  ## backslash.
+
+  if basePath == "":
+    return pathStr
+
+  var
+    parentPath = basePath
+    parentLevel = 0
+  let matchObj = parse_rel_path.match(pathStr, parentLevel)
+  return
+    if matchObj.ok:
+      for i in countdown(parentLevel, 1):
+        parentPath = parentPath.parentDir
+      parentPath / pathStr.substr(matchObj.matchMax)
+    else:
+      pathStr
 
 proc readConfigFileJSON(fileStream: Stream, confPath: string = ""): JsonNode =
   doAssert fileStream != nil, "Unable to open config file " & confPath
@@ -41,11 +68,13 @@ template verify_store_stringtable(jsObj, resultVar, errMsg) =
     except JsonKindError as e:
       raise newException(ConfigError, e.msg)
 
-proc toConfigData*(jsConfig: JsonNode): ref ConfigData =
+proc toConfigData*(jsConfig: JsonNode, confPath: string = ""): ref ConfigData =
   doAssert jsConfig.kind == JObject, "Invalid config JSON data"
   doAssert jsConfig.isValidConfig, "Invalid config JSON schema"
 
   result = new(ConfigData)
+  let confDirPath = confPath.parentDir
+
   let jsPaths = jsConfig.fields.getOrDefault("paths", newJNull())
   verify_store_stringtable(
     jsPaths, result.paths, "Paths config JSON object must be a dictionary"
@@ -80,7 +109,7 @@ proc toConfigData*(jsConfig: JsonNode): ref ConfigData =
           envTable[envK] = map(
             envV.elems,
             proc(j: JsonNode): string =
-              return j.str,
+              return j.str.toAbsPath(confDirPath),
           )
         of JString:
           envTable[envK] = @[envV.str]
@@ -88,9 +117,12 @@ proc toConfigData*(jsConfig: JsonNode): ref ConfigData =
           raise newException(JsonParsingError, "Due to asserts, should be unreachable")
       result.envs[verSpec] = envTable
 
+  for k in result.paths.keys:
+    result.paths[k] = result.paths[k].toAbsPath(confDirPath)
+
 proc readConfigJSON*(confPath: string): ref ConfigData =
   let jsConfig = readConfigFileJSON(confPath)
-  result = jsConfig.toConfigData
+  result = jsConfig.toConfigData(confPath)
 
 proc writeConfigFileJSON(confPath: string, jsConfig: JsonNode) =
   let jsonFile = newFileStream(confPath, fmWrite)

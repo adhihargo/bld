@@ -5,6 +5,21 @@ import std/unittest
 
 import constants
 
+block:
+  let basePath = r"C:\abc\def\ghi\jkl"
+  test "Substitute relative path marker - simple":
+    let absPath = r"\\MNO".toAbsPath(basePath)
+    check absPath == r"C:\abc\def\ghi\jkl\MNO"
+  test "Substitute relative path marker - current level":
+    let absPath = r"\\.\MNO".toAbsPath(basePath)
+    check absPath == r"C:\abc\def\ghi\jkl\MNO"
+  test "Substitute relative path marker - one level up":
+    let absPath = r"\\..\MNO".toAbsPath(basePath)
+    check absPath == r"C:\abc\def\ghi\MNO"
+  test "Substitute relative path marker - two levels up":
+    let absPath = r"\\...\MNO".toAbsPath(basePath)
+    check absPath == r"C:\abc\def\MNO"
+
 test "Read nonexistent file":
   expect ConfigError:
     discard readConfigFileJSON("nonexistent.json")

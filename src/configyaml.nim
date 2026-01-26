@@ -25,15 +25,15 @@ proc readConfigFileYAML(confPath: string): seq[JsonNode] =
     let mark = e.mark
     raise newException(ConfigError, &"[{mark.line}:{mark.column}] " & e.msg)
 
-proc readConfigRawYAML(jsConfigList: seq[JsonNode]): ref ConfigData =
+proc readConfigRawYAML(jsConfigList: seq[JsonNode], confPath: string): ref ConfigData =
   doAssert jsConfigList.len > 0, "File is empty"
 
   let jsConfig = jsConfigList[0]
   doAssert jsConfig.kind == JObject
 
-  let jsVersions = jsConfig.toConfigData
+  let jsVersions = jsConfig.toConfigData(confPath)
   return jsVersions
 
 proc readConfigYAML*(confPath: string): ref ConfigData =
   let jsConfigList = readConfigFileYAML(confPath)
-  result = readConfigRawYAML(jsConfigList)
+  result = readConfigRawYAML(jsConfigList, confPath)
