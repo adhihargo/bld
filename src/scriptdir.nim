@@ -1,6 +1,10 @@
 import std/os
+import std/strutils
 
 proc verifyScriptDir*(dirPath: string): bool =
+  if not dirPath.endsWith("_SCRIPTS"):
+    return true
+
   try:
     let subdirs = ["addons", "startup"]
     for d in subdirs:
