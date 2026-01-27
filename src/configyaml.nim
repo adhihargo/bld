@@ -35,5 +35,7 @@ proc readConfigRawYAML(jsConfigList: seq[JsonNode], confPath: string): ref Confi
   return jsVersions
 
 proc readConfigYAML*(confPath: string): ref ConfigData =
+  ## Read YAML file `confPath`, returning config data.
+
   let jsConfigList = readConfigFileYAML(confPath)
   result = readConfigRawYAML(jsConfigList, confPath)

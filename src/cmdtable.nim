@@ -12,6 +12,8 @@ type VersionSpec* = ref object
   matching*: string
 
 proc `$`*(versionSpec: VersionSpec): string =
+  ## String conversion operator for version spec
+
   if versionSpec == nil:
     result = "nil"
   else:
@@ -22,6 +24,8 @@ proc `$`*(versionSpec: VersionSpec): string =
     result.add(")")
 
 proc `==`*(a, b: VersionSpec): bool =
+  ## Equality operator for version specs
+
   return
     (a.isNil and b.isNil) or
     (not (a.isNil or b.isNil) and a.literal == b.literal and a.matching == b.matching)
@@ -29,6 +33,10 @@ proc `==`*(a, b: VersionSpec): bool =
 proc getVersionTable(
     versionSpec: string, table: OrderedTable, reverse: bool = false
 ): OrderedTable {.inline.} =
+  ## Return a subset of `table` with keys that `versionSpec` is a
+  ## substring of or, if `reverse` is true (to aid cross-referencing),
+  ## with keys that are substrings of `versionSpec`.
+
   let emptyVersionSpec = versionSpec.strip() == ""
   return collect(initOrderedTable()):
     for k, v in table.pairs:
@@ -39,12 +47,19 @@ proc getVersionTable(
         {k: v}
 
 proc getVersionOpts*(confData: ref ConfigData, versionSpec: string): seq[string] =
+  ## Get a list of available version specs matching `versionSpec`
+
   let
     tblPaths = confData.paths
     ctxTblPaths = getVersionTable(versionSpec, tblPaths)
   return ctxTblPaths.keys.toSeq
 
 proc getVersionSpec*(confData: ref ConfigData, versionSpec: string = ""): VersionSpec =
+  ## Get a version spec pointing to an existing binary path, matching
+  ## `versionSpec` literally or by cross-reference. By default should
+  ## return version spec of numerically latest (or explicitly default)
+  ## binary path.
+
   let
     tblPaths = confData.paths
     litTableKeys = confData.getVersionOpts(versionSpec).sorted(order = SortOrder.Descending)

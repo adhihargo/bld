@@ -69,6 +69,8 @@ template verify_store_stringtable(jsObj, resultVar, errMsg) =
       raise newException(ConfigError, e.msg)
 
 proc toConfigData*(jsConfig: JsonNode, confPath: string = ""): ref ConfigData =
+  ## Verify and convert JSON node `jsConfig` into config data.
+
   doAssert jsConfig.kind == JObject, "Invalid config JSON data"
   doAssert jsConfig.isValidConfig, "Invalid config JSON schema"
 
@@ -121,6 +123,8 @@ proc toConfigData*(jsConfig: JsonNode, confPath: string = ""): ref ConfigData =
     result.paths[k] = result.paths[k].toAbsPath(confDirPath)
 
 proc readConfigJSON*(confPath: string): ref ConfigData =
+  ## Read JSON file `confPath`, returning config data.
+
   let jsConfig = readConfigFileJSON(confPath)
   result = jsConfig.toConfigData(confPath)
 
@@ -131,6 +135,9 @@ proc writeConfigFileJSON(confPath: string, jsConfig: JsonNode) =
   jsonFile.write(jsConfig.pretty)
 
 proc updateConfigPathsJSON*(confPath: string, extraTblPaths: PathTable) =
+  ## Add path table `extraTblPaths` to config file `confPath`, prune
+  ## missing files from existing table, and save the file.
+
   let jsConfig = readConfigFileJSON(confPath, create = true)
   try:
     let jsPaths = jsConfig.fields.getOrDefault("paths", newJObject())

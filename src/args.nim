@@ -104,6 +104,9 @@ proc parseArgsRaw(): ref ArgumentsData =
       raise newException(CommandLineError, "Unrecognized flag: " & p.key)
 
 proc parseArgs*(): ref ArgumentsData =
+  ## Parse and store command-line arguments into argument data. For
+  ## now, only print help operation is treated differently.
+
   let argData = parseArgsRaw()
   if argData != nil and argData.help:
     printHelp()

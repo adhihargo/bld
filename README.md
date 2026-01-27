@@ -8,6 +8,7 @@ The intention is to write a tool that,
 - Use separate user preferences per group of Blender versions.
 - Use separate sets of addons per intended task (modeling, rigging, animating, etc.)
 - Open any Blender file with the most compatible version available.
+- Easier setup of portable, per-project Blender configuration.
 
 # Getting Started
 
@@ -56,14 +57,21 @@ This behavior can be bypassed simply by passing file path arguments after `-` (o
 
 # Configuration Files<a id="configfiles"/>
 
-`bld` reads config files in both JSON and YAML format of equivalent structure, either from multiple files read sequentially in a specific order (default behavior), or one or more files explicitly passed as command line arguments (see `-c` in [*Command Line Arguments*](#cmdargs)), accumulated into one internal dictionary with each subsequent files updates the values of prior ones. 
+`bld` reads config files in both JSON and YAML format of equivalent structure, from:
 
-The default order of file paths `bld` attempts to read:
+1. Files read sequentially in a specific order (default behavior):
+   1. `~/bld.json` (home directory)
+   1. `~/bld.yaml`
+   1. `./bld.json` (directory of `bld` executable)
+   1. `./bld.yaml`
 
-1. `~/bld.json` (home directory)
-1. `~/bld.yaml`
-1. `./bld.json` (directory of `bld` executable)
-1. `./bld.yaml`
+2. One or more files explicitly passed as command line arguments (see `-c` in [*Command Line Arguments*](#cmdargs)), 
+
+3. Config files found in the nearest directory hierarchy of the first opened .blend file. 
+
+   For example, before opening `C:\data\projects\ABC\assets\table\table.blend`, `bld` will search for `bld.*` config files from `C:\data\projects\ABC\assets\table` up to `C:\`. If a set of files is found in lower directories (e.g. `C:\data\projects\ABC\bld.yaml`) files further up in the hierarchy (e.g. `C:\data\bld.yaml`) will not be read.
+
+… all accumulated into one internal dictionary with each subsequent files updates the values of prior ones. 
 
 JSON format is primarily for application-generated files (especially `~/bld.json` which is modified each time user registers a new Blender executable), while YAML is chosen to give an optional format that's easier for the user to edit.
 
@@ -125,9 +133,9 @@ For any other Blender v4.\*.\* release, either is expressly specified or is the 
 
 ### Cross-Reference
 
-In `paths` section, a version spec can refer to other version spec, instead of executable path. If a matching spec is found, other sections will searched in, first based on the literal spec then the matching spec. For example, with this config:
+In `paths` section, a version spec can refer to other version spec, instead of executable path. If a matching spec is found, other sections will be searched in, first based on the literal spec then the matching spec. For example, with this config:
 
-```yaml
+```json
 {
   "paths": {
     "4.4.0": "C:\\prog\\blender-4.4.0-windows-x64\\blender.exe",
@@ -168,6 +176,33 @@ With this format, users can determine themselves where in the search order new p
 ### Extra Processing for Blender Scripts Path Variables
 
 If `BLENDER_USER_SCRIPTS` or  `BLENDER_SYSTEM_SCRIPTS` is defined in config `envs`, the path in their values will be checked and created if nonexistent, including its subdirectories `addons` and `startup`. The intent is so the user can just specify a path, then install addons into it immediately after launch.
+
+## Relative Path Substitution
+
+In a config file, a user can specify paths relative to that file with a special notation: Prefix string `\\` will be substituted the config file's path, for these config items:
+
+- Binary paths in `paths` section,
+- Individual environment variable value items in `envs` section.
+
+The prefix string can be followed, optionally, with periods ending with another backslash (`..\`) to specify directory levels to go up relative to config file's path.
+
+For example, a config file `C:\data\projects\ABC\bld.yaml` with the following configuration:
+
+```yaml
+paths:
+	"2.93": "\\..\DEF\blender\blender.exe"
+	"5.0.1": "\\blender\blender.exe"
+```
+
+… will be processed as:
+
+```yaml
+paths:
+	"2.93": "C:\data\projects\DEF\blender\blender.exe"
+	"5.0.1": "C:\data\projects\ABC\blender\blender.exe"
+```
+
+
 
 # Version List Update<a id="listupdate"/>
 
