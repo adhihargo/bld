@@ -110,7 +110,7 @@ proc getBlenderFileVersionTable*(
   for l in execResult:
     let
       versionPairRaw = l.split("||", maxsplit = 1)
-      optVersionInts = versionPairRaw[0].readVersionTriplet
+      optVersionInts = versionPairRaw[0].substr(8).readVersionTriplet
     if optVersionInts.isNone():
       continue
 
