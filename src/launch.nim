@@ -102,8 +102,8 @@ proc processBlendArgs(
       # unknown file version, open with latest available
       processCommandExec(latestVersionSpec, confData, filePath, passedArgs)
       break
+    let fileVersion = optFileVersion.get()
     for vTuple in verTripletOpts:
-      let fileVersion = optFileVersion.get()
       if vTuple[0] >= fileVersion and vTuple[2].fileExists:
         let versionSpec = confData.getVersionSpec(vTuple[1])
         stderr.writeLine("> File version: ", fileVersion)
@@ -132,7 +132,7 @@ proc processCommandExec(
       cmdSwitches = confData.switches.get(versionSpec)
       cmdEnvVars = confData.envs.get(versionSpec).finalizeEnvVars
       filePath = if filePath == "": filePath else: filePath.quoteShell
-    applyEnvVars(cmdEnvVars)
+    applyEnvVars(versionSpecStr, cmdEnvVars)
     cmdStr = [cmdBinPath, filePath, cmdSwitches, passedArgs]
       .filter(
         proc(c: string): bool =

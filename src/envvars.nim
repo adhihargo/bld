@@ -45,9 +45,10 @@ proc finalizeEnvVars*(envvars: EnvVarMapping): owned(StringTableRef) =
     verifyEnvVar(k, copyVStr)
     result[k] = copyVStr
 
-proc applyEnvVars*(envvars: StringTableRef) =
+proc applyEnvVars*(versionSpecStr: string, envvars: StringTableRef) =
   for k, v in envvars:
     putEnv(k, v)
+  putEnv("BLD_VERSIONSPEC", versionSpecStr)
 
 when isMainModule:
   try:
