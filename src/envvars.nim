@@ -23,7 +23,7 @@ const BLENDER_ENV_VARS = [
 
 proc verifyEnvVar(key: string, value: string) {.inline.} =
   if key in BLENDER_ENV_VARS:
-    let verifyResult = verifyScriptDir(value)
+    let verifyResult = verifyScriptDir(key, value)
     if not verifyResult:
       stderr.writeLine("> Warning: ", key, " path may not be usable: ", value)
 
