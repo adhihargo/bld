@@ -4,6 +4,7 @@ import std/strtabs
 import std/strutils
 import std/tables
 
+import cmdtable
 import configdata
 import constants
 import errors
@@ -45,18 +46,8 @@ proc finalizeEnvVars*(envvars: EnvVarMapping): owned(StringTableRef) =
     verifyEnvVar(k, copyVStr)
     result[k] = copyVStr
 
-proc applyEnvVars*(versionSpecStr: string, envvars: StringTableRef) =
+proc applyEnvVars*(versionSpec: VersionSpec, envvars: StringTableRef) =
   for k, v in envvars:
     putEnv(k, v)
-  putEnv("BLD_VERSIONSPEC", versionSpecStr)
-
-when isMainModule:
-  try:
-    let
-      testEnvVars = {"PATH": @["ABC", "*", "DEF"]}.toOrderedTable()
-      finalEnvVars = testEnvVars.finalizeEnvVars()
-    for k, v in finalEnvVars.pairs:
-      echo k, ": ", v
-  except ConfigError as e:
-    stderr.writeLine("> Config error: ", e.msg)
-    quit(QuitFailure)
+  putEnv("BLD_VERSIONSPEC", versionSpec.literal)
+  putEnv("BLD_VERSIONSPEC_MATCHING", versionSpec.matching)

@@ -132,7 +132,7 @@ proc processCommandExec(
       cmdSwitches = confData.switches.get(versionSpec)
       cmdEnvVars = confData.envs.get(versionSpec).finalizeEnvVars
       filePath = if filePath == "": filePath else: filePath.quoteShell
-    applyEnvVars(versionSpecStr, cmdEnvVars)
+    applyEnvVars(versionSpec, cmdEnvVars)
     cmdStr = [cmdBinPath, filePath, cmdSwitches, passedArgs]
       .filter(
         proc(c: string): bool =
