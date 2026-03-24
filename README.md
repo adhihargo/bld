@@ -38,7 +38,7 @@ bld FILE_ARG* --v:VERSION_SPEC -c:CONFIG_PATH* FILE_ARG* -
 | Argument/switch                 | Description                                                  |
 | ------------------------------- | ------------------------------------------------------------ |
 | `FILE_ARG` | Any number of file arguments. Ones without `.blend*` extension assumed to be executables and will be added into available executable paths. |
-| `-v:VERSION_SPEC` | Specify version spec as listed as a key in config file's `'paths'` section. |
+| `-v:VERSION_SPEC`/<br />`-VERSION_SPEC` | Specify version spec as listed as a key in config file's `'paths'` section. |
 | `-u`/`--update` | Updates executable path list. Parent directory of all listed paths will be searched for other files named `blender.exe` at the same level. Newly-found paths added, nonexistent paths removed. |
 | `-c`/<br />`--conf=CONFIG_PATH` | Specify config file path, repeatable. These paths will be read after predefined config file paths. |
 | `-l`/`--list` | List all version specs registered for the launcher, or if `-v` is used, ones prefixed with `VERSION_SPEC`. |
@@ -173,9 +173,16 @@ D:\E;C:\A;C:\B;D:\F
 
 With this format, users can determine themselves where in the search order new paths will be added relative to prior one.
 
-### Extra Processing for Blender Scripts Path Variables
+### Processing Blender Directory Path Variables
 
-If `BLENDER_USER_SCRIPTS` or  `BLENDER_SYSTEM_SCRIPTS` is defined in config `envs`, the path in their values will be checked and created if nonexistent, including its subdirectories `addons` and `startup`. The intent is so the user can just specify a path, then install addons into it immediately after launch.
+Blender-specific environment variables that's known to contain directory path will be checked for path's existence. Nonexistent path will be created, and especially for `_SCRIPTS` variables (`BLENDER_USER_SCRIPTS` or  `BLENDER_SYSTEM_SCRIPTS`), including its subdirectories `addons` and `startup`. The intent is so the user can just specify a path, then install addons into it immediately after launch.
+
+### `bld` Defined Variables
+
+`bld` passes some environment variables to its Blender subprocess:
+
+- `BLD_VERSIONSPEC`: User-specified version spec.
+- `BLD_VERSIONSPEC_MATCHING`: If user-specified version spec is a cross-reference, the literal version spec it is matching. Empty otherwise.
 
 ## Relative Path Substitution
 
