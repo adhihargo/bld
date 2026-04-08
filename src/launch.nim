@@ -2,7 +2,6 @@ import std/algorithm
 import std/options
 import std/os
 import std/osproc
-import std/paths
 import std/sequtils
 import std/strutils
 import std/strformat
@@ -10,6 +9,7 @@ import std/sugar
 import std/tables
 
 import args
+import editconfig
 import cmdtable
 import config
 import configdata
@@ -26,41 +26,13 @@ proc getArgData(): ref ArgumentsData =
     stderr.writeLine("> Command line error: ", e.msg)
     quit(QuitFailure)
 
-proc printExeVersions(exeTable: PathTable) =
-  stderr.writeLine("> Registering Blender versions: ")
-  for v in exeTable.keys:
-    stderr.writeLine("> -v:", v)
-
-proc updateExePaths*() =
-  let
-    confPath = $expandTilde(Path("~") / Path(CONFIG_JSON_NAME))
-    confData = readConfigFile(confPath)
-    pathRoots = getBinaryPathRoots(confData)
-    existingBinaryPaths = confData.paths.values.toSeq
-    binaryPaths = getBinaryPaths(pathRoots)
-    newBinaryPaths = binaryPaths.filter(
-      proc(fp: string): bool =
-        fp notin existingBinaryPaths
-    )
-    newBinaryTable = getBlenderExeVersionTable(newBinaryPaths)
-  if newBinaryTable.len > 0:
-    printExeVersions(newBinaryTable)
-  appendConfigPaths(newBinaryTable)
-
-proc appendExePaths(exeArgList: seq[string]): bool =
-  let exeTable = getBlenderExeVersionTable(exeArgList)
-  if exeTable.len == 0:
-    return false
-
-  printExeVersions(exeTable)
-  appendConfigPaths(exeTable)
-  return true
-
 proc processExePaths(exeArgList: seq[string]) =
   if exeArgList.len == 0:
     return
 
-  if appendExePaths(exeArgList):
+  let exeTable = getBlenderExeVersionTable(exeArgList)
+  if exeTable.len > 0:
+    appendConfigPaths(exeTable)
     quit(QuitSuccess)
   else:
     stderr.writeLine("> No recognized Blender binary in argument list, exiting.")
@@ -164,7 +136,7 @@ proc runApp() =
 
   if argData.commandType == cmtUpdatePaths:
     stderr.writeLine("> Updating Blender versions list")
-    updateExePaths()
+    updateConfigPaths()
     quit(QuitSuccess)
   elif argData.commandType == cmtList:
     stderr.writeLine("> Blender versions registered:")
