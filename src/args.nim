@@ -36,6 +36,8 @@ FILE_ARG		Any number of file arguments. File
 			assumed to be executables and will
 			be added into available executable
 			paths.
+			First executable addition also runs
+			--update.
 -v:VERSION_SPEC/	Specify version spec as listed as a
  -VERSION_SPEC		key in config file's 'paths'
 			section.

@@ -15,6 +15,8 @@ proc printExeVersions(exeTable: PathTable) =
   for v in exeTable.keys:
     stderr.writeLine("> -v:", v)
 
+proc updateConfigPaths*(confPath: string = "")
+
 proc appendConfigPaths*(extraTblPaths: PathTable, confPath: string = "") =
   let
     confPath =
@@ -22,10 +24,17 @@ proc appendConfigPaths*(extraTblPaths: PathTable, confPath: string = "") =
         $expandTilde(Path("~") / Path(CONFIG_JSON_NAME))
       else:
         confPath
+    firstRun = not confPath.fileExists
 
   if extraTblPaths.len > 0:
     printExeVersions(extraTblPaths)
   updateConfigPathsJSON(confPath, extraTblPaths)
+
+  if firstRun:
+    stderr.writeLine(
+      "> First run, find other versions under the same parent directory..."
+    )
+    updateConfigPaths(confPath)
 
 proc updateConfigPaths*(confPath: string = "") =
   let confPath =
