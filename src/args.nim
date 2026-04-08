@@ -24,7 +24,7 @@ type
 onFailedAssert(msg):
   var submsg = msg
   submsg = msg.substr(max(0, msg.rfind("` ") + 2))
-  raise (ref CommandLineError)(msg: submsg)
+  raise CommandLineError.newException(submsg)
 
 proc printHelp() =
   let binName = lastPathPart(getAppFilename())
@@ -101,7 +101,7 @@ proc parseArgsRaw(): ref ArgumentsData =
       # Treat unrecognized short flag as version spec
       result.versionSpec = p.key & p.val
     else:
-      raise newException(CommandLineError, "Unrecognized flag: " & p.key)
+      raise CommandLineError.newException("Unrecognized flag: " & p.key)
 
 proc parseArgs*(): ref ArgumentsData =
   ## Parse and store command-line arguments into argument data. For

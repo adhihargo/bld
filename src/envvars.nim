@@ -13,7 +13,7 @@ import scriptdir
 onFailedAssert(msg):
   var submsg = msg
   submsg = msg.substr(max(0, msg.rfind("` ") + 2))
-  raise (ref ConfigError)(msg: submsg)
+  raise ConfigError.newException(submsg)
 
 const BLENDER_ENV_VARS = [
   "BLENDER_USER_RESOURCES", "BLENDER_USER_CONFIG", "BLENDER_USER_SCRIPTS",

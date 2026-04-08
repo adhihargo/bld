@@ -13,7 +13,7 @@ import errors
 onFailedAssert(msg):
   var submsg = msg
   submsg = msg.substr(max(0, msg.rfind("` ") + 1))
-  raise (ref ConfigError)(msg: submsg)
+  raise ConfigError.newException(submsg)
 
 proc readConfigFileYAML(confPath: string): seq[JsonNode] =
   let yamlFile = newFileStream(confPath)
@@ -23,7 +23,7 @@ proc readConfigFileYAML(confPath: string): seq[JsonNode] =
     result = loadToJson(yamlFile)
   except YamlParserError as e:
     let mark = e.mark
-    raise newException(ConfigError, &"[{mark.line}:{mark.column}] " & e.msg)
+    raise ConfigError.newException(&"[{mark.line}:{mark.column}] " & e.msg)
 
 proc readConfigRawYAML(jsConfigList: seq[JsonNode], confPath: string): ref ConfigData =
   doAssert jsConfigList.len > 0, "File is empty"

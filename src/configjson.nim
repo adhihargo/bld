@@ -14,7 +14,7 @@ import errors
 onFailedAssert(msg):
   var submsg = msg
   submsg = msg.substr(max(0, msg.rfind("` ") + 2))
-  raise (ref ConfigError)(msg: submsg)
+  raise ConfigError.newException(submsg)
 
 let parse_rel_path = peg("rel_path", parentLevel: int):
   rel_path <- '\\'[2] * ?parent_ref * &!'\\'
@@ -48,7 +48,7 @@ proc readConfigFileJSON(fileStream: Stream, confPath: string = ""): JsonNode =
   try:
     jsConfig = parseJson(fileStream)
   except JsonParsingError as e:
-    raise newException(ConfigError, "JSON read: " & e.msg)
+    raise ConfigError.newException("JSON read: " & e.msg)
 
   return jsConfig
 
@@ -66,7 +66,7 @@ template verify_store_stringtable(jsObj, resultVar, errMsg) =
     try:
       resultVar = jsObj.jsonTo(PathTable)
     except JsonKindError as e:
-      raise newException(ConfigError, e.msg)
+      raise ConfigError.newException(e.msg)
 
 proc toConfigData*(jsConfig: JsonNode, confPath: string = ""): ref ConfigData =
   ## Verify and convert JSON node `jsConfig` into config data.
@@ -116,7 +116,7 @@ proc toConfigData*(jsConfig: JsonNode, confPath: string = ""): ref ConfigData =
         of JString:
           envTable[envK] = @[envV.str.toAbsPath(confDirPath)]
         else:
-          raise newException(JsonParsingError, "Due to asserts, should be unreachable")
+          raise JsonParsingError.newException("Due to asserts, should be unreachable")
       result.envs[verSpec] = envTable
 
   for k in result.paths.keys:
@@ -160,6 +160,6 @@ proc updateConfigPathsJSON*(confPath: string, extraTblPaths: PathTable) =
     tblPaths.sort(cmp)
     jsConfig["paths"] = tblPaths.toJson
   except JsonKindError as e:
-    raise newException(ConfigError, e.msg)
+    raise ConfigError.newException(e.msg)
 
   writeConfigFileJSON(confPath, jsConfig)
