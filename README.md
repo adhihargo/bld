@@ -13,8 +13,8 @@ The intention is to write a tool that,
 # Getting Started
 
 1. Download and extract `bld`'s binary archive in any location. The next steps assume that location is included in `PATH` environment variable, otherwise run in a command shell or file manager window pointing to its directory.
-2. Register at least one Blender executable either by drag and drop to `bld` executable in file manager, or run `bld` in command shell with the executables' full path as arguments. An even faster way is to search for all `blender.exe` files in any file manager or tools like [voidtools' Everything](https://www.voidtools.com/), then drag them into `bld`. This will create `bld.json` in home directory (see [Configuration Files](#configfiles)).
-   Later installations, if placed under the same parent directory as previously registered, can be quickly added by running
+2. Register at least one Blender executable either by drag and drop to `bld` executable in file manager, or run `bld` in command shell with the executables' full path as arguments. An even faster way is to search for all `blender.exe` files in any file manager or tools like [voidtools' Everything](https://www.voidtools.com/), then drag them into `bld`. This will create `bld.json` in home directory (see [Configuration Files](#configfiles)). 
+   The first time this is done, when `~/bld.json` hasn't been created, `bld` will also search for other executables under the same parent directory. Any Blender installations added later under that same path can be quickly added by running
    
    ```shell
    bld --update
@@ -37,8 +37,8 @@ bld FILE_ARG* --v:VERSION_SPEC -c:CONFIG_PATH* FILE_ARG* -
 
 | Argument/switch                 | Description                                                  |
 | ------------------------------- | ------------------------------------------------------------ |
-| `FILE_ARG` | Any number of file arguments. Ones without `.blend*` extension assumed to be executables and will be added into available executable paths. |
-| `-v:VERSION_SPEC`/<br />`-VERSION_SPEC` | Specify version spec as listed as a key in config file's `'paths'` section. |
+| `FILE_ARG` | Any number of file arguments. Ones without `.blend*` extension assumed to be executables and will be added into available executable paths. <br />First executable addition also runs `--update`. |
+| `-v:VERSION_SPEC`/<br /> `-VERSION_SPEC` | Specify version spec as listed as a key in config file's `'paths'` section. |
 | `-u`/`--update` | Updates executable path list. Parent directory of all listed paths will be searched for other files named `blender.exe` at the same level. Newly-found paths added, nonexistent paths removed. |
 | `-c`/<br />`--conf=CONFIG_PATH` | Specify config file path, repeatable. These paths will be read after predefined config file paths. |
 | `-l`/`--list` | List all version specs registered for the launcher, or if `-v` is used, ones prefixed with `VERSION_SPEC`. |
