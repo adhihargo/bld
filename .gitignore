@@ -5,3 +5,6 @@
 *.zip
 
 .task/
+
+# Auto-generated on build
+src/version.nim

@@ -4,6 +4,7 @@ import std/strformat
 import std/strutils
 
 import errors
+import version
 
 type
   CommandType* = enum
@@ -11,6 +12,8 @@ type
     cmtList
     cmtUpdatePaths
     cmtPrintConf
+    cmtPrintHelp
+    cmtPrintVersion
     cmtInstall
 
   ArgumentsData* = object
@@ -60,6 +63,7 @@ FILE_ARG		Any number of file arguments. File
 			Arguments passed after -/-- will be
 			added in the resulting `bld`
 			command.
+--version		Print bld version, then exit.
 -h/--help		Print help, then exit.
 -/--			First occurence ends command line
 			parsing. Remaining arguments will be
@@ -70,7 +74,7 @@ FILE_ARG		Any number of file arguments. File
 proc parseArgsRaw(): ref ArgumentsData =
   var p = initOptParser(
     shortNoVal = {'u', 'l', 'h'},
-    longNoVal = @["update", "list", "help", "print-conf", "install", ""],
+    longNoVal = @["update", "list", "help", "print-conf", "install", "version", ""],
   )
 
   result = (ref ArgumentsData)(commandType: cmtExec)
@@ -92,9 +96,11 @@ proc parseArgsRaw(): ref ArgumentsData =
     elif p.key in ["l", "list"]:
       result.commandType = cmtList
     elif p.key in ["h", "help"]:
-      result.help = true
+      result.commandType = cmtPrintHelp
     elif p.key in ["print-conf"]:
       result.commandType = cmtPrintConf
+    elif p.key in ["version"]:
+      result.commandType = cmtPrintVersion
     elif p.key in ["install"]:
       result.commandType = cmtInstall
     elif p.kind == cmdArgument:
@@ -110,8 +116,11 @@ proc parseArgs*(): ref ArgumentsData =
   ## now, only print help operation is treated differently.
 
   let argData = parseArgsRaw()
-  if argData != nil and argData.help:
+  if argData.commandType == cmtPrintHelp:
     printHelp()
+    quit(QuitSuccess)
+  elif argData.commandType == cmtPrintVersion:
+    echo versionStr
     quit(QuitSuccess)
   else:
     return argData
